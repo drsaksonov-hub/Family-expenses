@@ -308,7 +308,7 @@
     <div class="bg-gradient"></div>
     <header class="header">
         <div class="header-content">
-            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v2.1</span></div>
+            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v2.2</span></div>
             <div class="header-date" id="currentDate"></div>
         </div>
     </header>
@@ -1011,153 +1011,85 @@
 
         function parseMultipleExpenses(text) {
             const expenses = [];
-            const lines = text.split('\n').filter(line => line.trim().length > 2);
             
             console.log('Raw text:', text);
-            console.log('Parsing lines:', lines);
             
-            // ============================================
-            // THAI BANK SMS FORMAT
-            // Pattern: "ชำระ X,XXX.XXบ" (payment) followed by vendor
-            // We want to SKIP "เหลือ" (remaining balance)
-            // ============================================
+            // APPROACH: Find all @DOMAIN patterns and look for amounts BEFORE them
+            // The amount before @ is the payment, amount after is balance
             
-            // Thai payment pattern: ชำระ followed by amount and บ (Baht)
-            const thaiPaymentRegex = /ชำระ\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*บ/g;
+            // Find all vendor patterns
+            const vendorMatches = [...text.matchAll(/@([A-Za-z0-9.-]+\.(?:COM|APP|CO|NET|ORG))/gi)];
+            console.log('Vendors found:', vendorMatches.map(m => m[1]));
             
-            // Vendor patterns (usually @DOMAIN.COM format)
-            const vendorRegex = /@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/gi;
-            
-            // Find all Thai payments
-            let match;
-            const thaiPayments = [];
-            while ((match = thaiPaymentRegex.exec(text)) !== null) {
-                const amount = parseFloat(match[1].replace(/,/g, ''));
-                if (amount > 0 && amount < 1000000) {
-                    thaiPayments.push({
-                        amount: amount,
-                        index: match.index,
-                        fullMatch: match[0]
-                    });
-                }
-            }
-            
-            console.log('Thai payments found:', thaiPayments);
-            
-            // Find all vendors
-            const vendors = [];
-            while ((match = vendorRegex.exec(text)) !== null) {
-                vendors.push({
-                    vendor: match[1],
-                    index: match.index
-                });
-            }
-            
-            console.log('Vendors found:', vendors);
-            
-            // Match payments with vendors (find closest vendor after each payment)
-            for (const payment of thaiPayments) {
-                let vendorName = 'Unknown';
-                let minDistance = Infinity;
+            for (const vendorMatch of vendorMatches) {
+                const vendorIndex = vendorMatch.index;
+                const vendorName = vendorMatch[1].replace(/^www\./i, '').split('.')[0];
                 
-                for (const v of vendors) {
-                    const distance = v.index - payment.index;
-                    if (distance > 0 && distance < minDistance && distance < 200) {
-                        minDistance = distance;
-                        vendorName = v.vendor.replace(/^www\./i, '').split('.')[0];
+                // Look for amount BEFORE this vendor (within 100 chars before)
+                const textBefore = text.substring(Math.max(0, vendorIndex - 100), vendorIndex);
+                
+                // Find the LAST amount before the @ (closest to vendor)
+                const amountMatches = [...textBefore.matchAll(/(\d{1,3}(?:,\d{3})*\.\d{2})/g)];
+                
+                if (amountMatches.length > 0) {
+                    const lastAmount = amountMatches[amountMatches.length - 1];
+                    const amount = parseFloat(lastAmount[1].replace(/,/g, ''));
+                    
+                    if (amount > 0 && amount < 50000) {
+                        const cleanVendor = vendorName.charAt(0).toUpperCase() + vendorName.slice(1).toLowerCase();
+                        
+                        expenses.push({
+                            description: cleanVendor,
+                            amount: amount,
+                            currency: 'THB',
+                            date: new Date().toISOString().split('T')[0],
+                            category: guessCategoryFromVendor(cleanVendor),
+                            selected: true
+                        });
                     }
                 }
-                
-                // Capitalize vendor name
-                vendorName = vendorName.charAt(0).toUpperCase() + vendorName.slice(1).toLowerCase();
-                
-                expenses.push({
-                    description: vendorName,
-                    amount: payment.amount,
-                    currency: 'THB',
-                    date: new Date().toISOString().split('T')[0],
-                    category: guessCategory(vendorName) || guessCategoryFromVendor(vendorName),
-                    selected: true
-                });
             }
             
-            // ============================================
-            // APP STORE / GENERAL FORMAT
-            // ============================================
+            // FALLBACK: App Store format if no vendors found
             if (expenses.length === 0) {
-                // Patterns for App Store and general formats
+                const lines = text.split('\n').filter(line => line.trim().length > 3);
                 const patterns = [
-                    // Thai Baht: ฿X,XXX.XX (฿ might be read as B or 8)
-                    /^(.+?)\s+[฿B8]\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*$/i,
-                    /^(.+?)\s+(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*[฿B]\s*$/i,
-                    /^(.{3,50}?)\s+[฿B8]?(\d{1,3},\d{3}(?:\.\d{2})?)\s*$/,
-                    /^(.{3,50}?)\s+[฿B8]?(\d{2,3}\.\d{2})\s*$/,
-                    // USD format
-                    /^(.+?)\s+\$\s*(\d+(?:\.\d{2})?)\s*$/i,
-                    // Generic: text followed by number.XX at end
-                    /^(.{3,50}?)\s+(\d{1,6}(?:\.\d{2}))\s*$/,
+                    /^(.{3,40}?)\s+[฿B]?(\d{1,3}(?:,\d{3})*\.\d{2})\s*$/,
+                    /^(.+?)\s+\$(\d+\.\d{2})\s*$/i,
                 ];
                 
-                const usedAmounts = new Set();
-                
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    
-                    if (line.length < 5) continue;
-                    if (/^(total|subtotal|tax|เหลือ|balance|>)/i.test(line)) continue;
-                    
+                for (const line of lines) {
+                    if (/total|balance/i.test(line)) continue;
                     for (const pattern of patterns) {
                         const match = line.match(pattern);
-                        if (match) {
-                            let description = match[1] ? match[1].trim() : '';
-                            let amountStr = match[2];
-                            
-                            const amount = parseFloat(amountStr.replace(/,/g, ''));
-                            
-                            if (usedAmounts.has(amount) || amount < 1 || amount > 100000) continue;
-                            if (description.length < 2) continue;
-                            
-                            description = description
-                                .replace(/^\d{1,2}\s+\w{3}\s+\d{4}\s*/i, '')
-                                .replace(/\s*subscription\s*$/i, '')
-                                .replace(/\s+/g, ' ')
-                                .trim();
-                            
-                            if (description.length < 2) continue;
-                            
-                            let currency = 'THB';
-                            if (line.includes('$') && !line.includes('฿')) currency = 'USD';
-                            else if (line.includes('€')) currency = 'EUR';
-                            
-                            usedAmounts.add(amount);
-                            expenses.push({
-                                description: description.substring(0, 50),
-                                amount: amount,
-                                currency: currency,
-                                date: new Date().toISOString().split('T')[0],
-                                category: guessCategory(description) || 'subscriptions',
-                                selected: true
-                            });
-                            
-                            break;
+                        if (match && match[1].length > 2) {
+                            const amount = parseFloat(match[2].replace(/,/g, ''));
+                            if (amount > 0 && amount < 50000) {
+                                expenses.push({
+                                    description: match[1].trim().substring(0, 40),
+                                    amount: amount,
+                                    currency: line.includes('$') ? 'USD' : 'THB',
+                                    date: new Date().toISOString().split('T')[0],
+                                    category: 'subscriptions',
+                                    selected: true
+                                });
+                            }
                         }
                     }
                 }
             }
             
-            // Remove exact duplicates (same amount AND same vendor)
+            // Remove duplicates
             const unique = [];
             for (const exp of expenses) {
                 const isDupe = unique.some(u => 
                     Math.abs(u.amount - exp.amount) < 0.01 && 
                     u.description.toLowerCase() === exp.description.toLowerCase()
                 );
-                if (!isDupe) {
-                    unique.push(exp);
-                }
+                if (!isDupe) unique.push(exp);
             }
             
-            console.log('Detected expenses:', unique);
+            console.log('Final expenses:', unique);
             return unique;
         }
         
