@@ -848,11 +848,48 @@
         function convertToTHB(amount, currency) { return amount * EXCHANGE_RATES[currency]; }
         function updateConversion() { const amount = parseFloat(document.getElementById('amountInput').value) || 0, currency = document.getElementById('currencySelect').value; if (currency !== 'THB' && amount > 0) document.getElementById('convertedAmount').textContent = `≈ ฿${formatNumber(convertToTHB(amount, currency))} THB`; else document.getElementById('convertedAmount').textContent = ''; }
 
+        // Check for potential duplicate expenses
+        function checkForDuplicate(newExpense) {
+            const dominated = newExpense.description.toLowerCase();
+            const newAmount = newExpense.amount;
+            const newDate = newExpense.date;
+            
+            // Check expenses from the last 7 days with same amount and similar description
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            
+            const duplicates = expenses.filter(e => {
+                const expenseDate = new Date(e.date);
+                const sameAmount = Math.abs(e.amount - newAmount) < 1; // Within 1 baht
+                const sameDay = e.date === newDate;
+                const similarDesc = e.description.toLowerCase() === dominated || 
+                                   e.description.toLowerCase().includes(dominated) ||
+                                   dominated.includes(e.description.toLowerCase());
+                const recentEnough = expenseDate >= sevenDaysAgo;
+                
+                return sameAmount && (sameDay || (similarDesc && recentEnough));
+            });
+            
+            return duplicates;
+        }
+
         function addExpense() {
             const amount = parseFloat(document.getElementById('amountInput').value), currency = document.getElementById('currencySelect').value, description = document.getElementById('descriptionInput').value.trim(), date = document.getElementById('dateInput').value;
             if (!amount || amount <= 0) { showToast('Please enter a valid amount', 'error'); return; }
             if (!selectedCategory) { showToast('Please select a category', 'error'); return; }
             const expense = { amount: convertToTHB(amount, currency), originalAmount: amount, originalCurrency: currency, description: description || getCategoryName(selectedCategory), category: selectedCategory, date: date, inputType: 'manual', addedBy: settings.userName || 'Unknown', createdAt: new Date().toISOString() };
+            
+            // Check for duplicates
+            const duplicates = checkForDuplicate(expense);
+            if (duplicates.length > 0) {
+                const dupInfo = duplicates[0];
+                const dupDate = new Date(dupInfo.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const confirmMsg = `⚠️ Possible duplicate!\n\nSimilar expense found:\n• ฿${formatNumber(dupInfo.amount)} - ${dupInfo.description}\n• Date: ${dupDate}\n• Added by: ${dupInfo.addedBy || 'Unknown'}\n\nAdd anyway?`;
+                if (!confirm(confirmMsg)) {
+                    return; // User cancelled
+                }
+            }
+            
             if (database) {
                 addExpenseToFirebase(expense);
                 showToast('Expense added & synced!', 'success');
@@ -920,6 +957,18 @@
             if (!amount || amount <= 0) { showToast('Please enter a valid amount', 'error'); return; }
             if (!selectedCategory) { showToast('Please select a category', 'error'); return; }
             const expense = { amount: convertToTHB(amount, currency), originalAmount: amount, originalCurrency: currency, description: description || getCategoryName(selectedCategory), category: selectedCategory, date: new Date().toISOString().split('T')[0], inputType: 'receipt', addedBy: settings.userName || 'Unknown', createdAt: new Date().toISOString() };
+            
+            // Check for duplicates
+            const duplicates = checkForDuplicate(expense);
+            if (duplicates.length > 0) {
+                const dupInfo = duplicates[0];
+                const dupDate = new Date(dupInfo.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const confirmMsg = `⚠️ Possible duplicate!\n\nSimilar expense found:\n• ฿${formatNumber(dupInfo.amount)} - ${dupInfo.description}\n• Date: ${dupDate}\n• Added by: ${dupInfo.addedBy || 'Unknown'}\n\nAdd anyway?`;
+                if (!confirm(confirmMsg)) {
+                    return;
+                }
+            }
+            
             if (database) {
                 addExpenseToFirebase(expense);
                 showToast('Expense added & synced!', 'success');
@@ -981,6 +1030,18 @@
             if (!amount || amount <= 0) { showToast('Please enter a valid amount', 'error'); return; }
             if (!selectedCategory) { showToast('Please select a category', 'error'); return; }
             const expense = { amount: convertToTHB(amount, currency), originalAmount: amount, originalCurrency: currency, description: description || getCategoryName(selectedCategory), category: selectedCategory, date: new Date().toISOString().split('T')[0], inputType: 'voice', addedBy: settings.userName || 'Unknown', createdAt: new Date().toISOString() };
+            
+            // Check for duplicates
+            const duplicates = checkForDuplicate(expense);
+            if (duplicates.length > 0) {
+                const dupInfo = duplicates[0];
+                const dupDate = new Date(dupInfo.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const confirmMsg = `⚠️ Possible duplicate!\n\nSimilar expense found:\n• ฿${formatNumber(dupInfo.amount)} - ${dupInfo.description}\n• Date: ${dupDate}\n• Added by: ${dupInfo.addedBy || 'Unknown'}\n\nAdd anyway?`;
+                if (!confirm(confirmMsg)) {
+                    return;
+                }
+            }
+            
             if (database) {
                 addExpenseToFirebase(expense);
                 showToast('Expense added & synced!', 'success');
