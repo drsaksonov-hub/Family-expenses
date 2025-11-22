@@ -308,7 +308,7 @@
     <div class="bg-gradient"></div>
     <header class="header">
         <div class="header-content">
-            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v2.2</span></div>
+            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v2.4</span></div>
             <div class="header-date" id="currentDate"></div>
         </div>
     </header>
@@ -1014,78 +1014,75 @@
             
             console.log('Raw text:', text);
             
-            // APPROACH: Find all @DOMAIN patterns and look for amounts BEFORE them
-            // The amount before @ is the payment, amount after is balance
+            // Pattern: amount like "1,195.00u" or "8,014.46u" followed by @DOMAIN
+            // The "u" is Thai "บ" (Baht) misread by OCR
+            // Also handle "Payment amount=THB8,014.46" format
             
-            // Find all vendor patterns
-            const vendorMatches = [...text.matchAll(/@([A-Za-z0-9.-]+\.(?:COM|APP|CO|NET|ORG))/gi)];
-            console.log('Vendors found:', vendorMatches.map(m => m[1]));
+            // Find all @domain patterns with the amount BEFORE them
+            const blocks = text.split(/(?=x-\d+@)/i);
             
-            for (const vendorMatch of vendorMatches) {
-                const vendorIndex = vendorMatch.index;
-                const vendorName = vendorMatch[1].replace(/^www\./i, '').split('.')[0];
+            for (const block of blocks) {
+                // Look for @DOMAIN.COM pattern
+                const domainMatch = block.match(/@([A-Za-z0-9.*-]+\.(?:COM|APP|CO|NET|ORG)[^\s]*)/i);
+                if (!domainMatch) continue;
                 
-                // Look for amount BEFORE this vendor (within 100 chars before)
-                const textBefore = text.substring(Math.max(0, vendorIndex - 100), vendorIndex);
+                const domain = domainMatch[1];
                 
-                // Find the LAST amount before the @ (closest to vendor)
-                const amountMatches = [...textBefore.matchAll(/(\d{1,3}(?:,\d{3})*\.\d{2})/g)];
+                // Extract vendor name from domain
+                let vendor = domain
+                    .replace(/^WWW\./i, '')
+                    .replace(/\/.*$/, '')  // Remove /BILL etc
+                    .split('.')[0]
+                    .replace(/^\*/, '');   // Remove leading *
                 
-                if (amountMatches.length > 0) {
-                    const lastAmount = amountMatches[amountMatches.length - 1];
-                    const amount = parseFloat(lastAmount[1].replace(/,/g, ''));
+                vendor = vendor.charAt(0).toUpperCase() + vendor.slice(1).toLowerCase();
+                
+                // Find amount BEFORE the @ sign - look for X,XXX.XXu or X,XXX.XX pattern
+                const textBefore = block.substring(0, domainMatch.index);
+                const amountMatch = textBefore.match(/(\d{1,3}(?:,\d{3})*\.\d{2})\s*u?/i);
+                
+                if (amountMatch) {
+                    const amount = parseFloat(amountMatch[1].replace(/,/g, ''));
                     
-                    if (amount > 0 && amount < 50000) {
-                        const cleanVendor = vendorName.charAt(0).toUpperCase() + vendorName.slice(1).toLowerCase();
-                        
+                    if (amount > 0 && amount < 100000) {
                         expenses.push({
-                            description: cleanVendor,
+                            description: vendor,
                             amount: amount,
                             currency: 'THB',
                             date: new Date().toISOString().split('T')[0],
-                            category: guessCategoryFromVendor(cleanVendor),
+                            category: guessCategoryFromVendor(vendor),
                             selected: true
                         });
                     }
                 }
             }
             
-            // FALLBACK: App Store format if no vendors found
-            if (expenses.length === 0) {
-                const lines = text.split('\n').filter(line => line.trim().length > 3);
-                const patterns = [
-                    /^(.{3,40}?)\s+[฿B]?(\d{1,3}(?:,\d{3})*\.\d{2})\s*$/,
-                    /^(.+?)\s+\$(\d+\.\d{2})\s*$/i,
-                ];
+            // Also check for "Payment amount=THBX,XXX.XX" format
+            const engPaymentMatches = text.matchAll(/Payment amount=THB(\d{1,3}(?:,\d{3})*\.\d{2})[^@]*@?([A-Za-z0-9.*-]+)?/gi);
+            for (const match of engPaymentMatches) {
+                const amount = parseFloat(match[1].replace(/,/g, ''));
+                let vendor = match[2] ? match[2].replace(/^\*/, '') : 'Payment';
+                vendor = vendor.split('.')[0];
+                vendor = vendor.charAt(0).toUpperCase() + vendor.slice(1).toLowerCase();
                 
-                for (const line of lines) {
-                    if (/total|balance/i.test(line)) continue;
-                    for (const pattern of patterns) {
-                        const match = line.match(pattern);
-                        if (match && match[1].length > 2) {
-                            const amount = parseFloat(match[2].replace(/,/g, ''));
-                            if (amount > 0 && amount < 50000) {
-                                expenses.push({
-                                    description: match[1].trim().substring(0, 40),
-                                    amount: amount,
-                                    currency: line.includes('$') ? 'USD' : 'THB',
-                                    date: new Date().toISOString().split('T')[0],
-                                    category: 'subscriptions',
-                                    selected: true
-                                });
-                            }
-                        }
-                    }
+                // Check if we already have this amount
+                const exists = expenses.some(e => Math.abs(e.amount - amount) < 0.01);
+                if (!exists && amount > 0 && amount < 100000) {
+                    expenses.push({
+                        description: vendor,
+                        amount: amount,
+                        currency: 'THB',
+                        date: new Date().toISOString().split('T')[0],
+                        category: guessCategoryFromVendor(vendor),
+                        selected: true
+                    });
                 }
             }
             
             // Remove duplicates
             const unique = [];
             for (const exp of expenses) {
-                const isDupe = unique.some(u => 
-                    Math.abs(u.amount - exp.amount) < 0.01 && 
-                    u.description.toLowerCase() === exp.description.toLowerCase()
-                );
+                const isDupe = unique.some(u => Math.abs(u.amount - exp.amount) < 0.01);
                 if (!isDupe) unique.push(exp);
             }
             
