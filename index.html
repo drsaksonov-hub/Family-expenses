@@ -1014,111 +1014,166 @@
             
             console.log('Parsing lines:', lines);
             
-            // Improved patterns for various formats
+            // First, let's look for Thai Baht amounts (฿X,XXX.XX or BXXX.XX patterns)
+            // The OCR might read ฿ as B or other characters
+            
+            // Patterns specifically for Thai App Store format
             const patterns = [
-                // Apple App Store format: "App Name $X.XX" or with date
-                /^(.+?)\s+\$(\d+(?:\.\d{2})?)\s*$/i,
-                // "Description    $XX.XX"
-                /^(.+?)\s{2,}\$(\d+(?:\.\d{2})?)/i,
-                // "$XX.XX    Description"  
-                /^\$(\d+(?:\.\d{2})?)\s{2,}(.+)/i,
-                // "Description: $XX.XX"
-                /^(.+?):\s*\$(\d+(?:\.\d{2})?)/i,
-                // Thai Baht: "Description ฿XXX" or "Description XXX฿"
-                /^(.+?)\s+฿\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/i,
-                /^(.+?)\s+(\d+(?:,\d{3})*(?:\.\d{2})?)\s*฿/i,
+                // Thai Baht: ฿X,XXX.XX or ฿XXX.XX (฿ might be read as B, 8, or similar)
+                /^(.+?)\s+[฿B8]\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*$/i,
+                /^(.+?)\s+(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*[฿B]\s*$/i,
+                // Amount at end of line with comma thousands separator
+                /^(.{3,50}?)\s+[฿B8]?(\d{1,3},\d{3}(?:\.\d{2})?)\s*$/,
+                /^(.{3,50}?)\s+[฿B8]?(\d{2,3}\.\d{2})\s*$/,
+                // USD format
+                /^(.+?)\s+\$\s*(\d+(?:\.\d{2})?)\s*$/i,
+                /^(.+?)\s+(\d+(?:\.\d{2})?)\s*(?:USD)\s*$/i,
                 // Euro format
-                /^(.+?)\s+€\s*(\d+(?:\.\d{2})?)/i,
-                // Generic: any text followed by a number that looks like money
-                /^(.{3,40}?)\s+(\d+\.\d{2})\s*$/,
-                // Number at end of line (common in statements)
-                /^(.{3,50}?)\s+(\d{1,3}(?:,\d{3})*\.\d{2})\s*$/,
+                /^(.+?)\s+€\s*(\d+(?:\.\d{2})?)\s*$/i,
+                // Generic: text followed by number.XX at end
+                /^(.{3,50}?)\s+(\d{1,6}(?:\.\d{2}))\s*$/,
             ];
             
-            // Date patterns to extract dates from lines
+            // Also scan for amounts anywhere in text and associate with nearby text
+            // This handles cases where OCR splits lines differently
+            const amountRegex = /[฿B8$€]?\s*(\d{1,3}(?:,\d{3})*\.\d{2})/g;
+            const allAmounts = [];
+            let match;
+            while ((match = amountRegex.exec(text)) !== null) {
+                const amount = parseFloat(match[1].replace(/,/g, ''));
+                if (amount >= 1 && amount < 1000000) {
+                    allAmounts.push({
+                        amount: amount,
+                        index: match.index,
+                        fullMatch: match[0]
+                    });
+                }
+            }
+            
+            console.log('Found amounts in text:', allAmounts);
+            
+            // Date patterns
             const datePatterns = [
-                /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/,
+                /(\d{1,2}\s+\w{3}\s+\d{4})/i,       // 21 Nov 2025
+                /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})/,
                 /(\w{3}\s+\d{1,2},?\s*\d{4})/i,
-                /(\d{1,2}\s+\w{3},?\s*\d{4})/i,
-                /(\w{3}\s+\d{1,2})/i,  // "Nov 15" without year
             ];
-
+            
+            // Track which amounts we've used
+            const usedAmounts = new Set();
+            
+            // First pass: try line-by-line pattern matching
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
                 
-                // Skip very short lines or headers
+                // Skip headers, totals, and short lines
                 if (line.length < 5) continue;
-                if (/^(total|subtotal|tax|balance|amount|date|description|item)/i.test(line)) continue;
+                if (/^(total|subtotal|tax|balance|date|>)/i.test(line)) continue;
+                if (/^total\s/i.test(line)) continue;
                 
                 for (const pattern of patterns) {
                     const match = line.match(pattern);
                     if (match) {
-                        let description, amountStr;
-                        
-                        // Check which capture group is the amount (the one that's a number)
-                        if (/^\d/.test(match[1])) {
-                            amountStr = match[1];
-                            description = match[2] || 'Unknown';
-                        } else {
-                            description = match[1] || 'Unknown';
-                            amountStr = match[2];
-                        }
+                        let description = match[1] ? match[1].trim() : '';
+                        let amountStr = match[2];
                         
                         const amount = parseFloat(amountStr.replace(/,/g, ''));
                         
-                        // Validate: amount should be reasonable, description should be meaningful
-                        if (amount > 0.01 && amount < 100000 && description.length >= 2) {
-                            // Clean up description
-                            description = description
-                                .replace(/^\d{1,2}[\/\-]\d{1,2}[\/\-]?\d{0,4}\s*/, '') // Remove leading dates
-                                .replace(/\s+/g, ' ')
-                                .trim();
-                            
-                            // Skip if description is just numbers or too short after cleanup
-                            if (description.length < 2 || /^\d+$/.test(description)) continue;
-                            
-                            // Try to find a date
-                            let date = new Date().toISOString().split('T')[0];
+                        // Skip if already used this amount or invalid
+                        if (usedAmounts.has(amount) || amount < 1 || amount > 100000) continue;
+                        if (description.length < 2) continue;
+                        
+                        // Clean description - remove date prefixes and "Subscription" suffix
+                        description = description
+                            .replace(/^\d{1,2}\s+\w{3}\s+\d{4}\s*/i, '')
+                            .replace(/\s*subscription\s*$/i, '')
+                            .replace(/\s+/g, ' ')
+                            .trim();
+                        
+                        if (description.length < 2 || /^(total|subscription)$/i.test(description)) continue;
+                        
+                        // Find associated date (look at current line and previous lines)
+                        let date = new Date().toISOString().split('T')[0];
+                        for (let j = i; j >= Math.max(0, i - 3); j--) {
                             for (const datePattern of datePatterns) {
-                                const dateMatch = line.match(datePattern);
+                                const dateMatch = lines[j].match(datePattern);
                                 if (dateMatch) {
                                     try {
-                                        // Try to parse the date
-                                        let dateStr = dateMatch[1];
-                                        // Add current year if not present
-                                        if (!/\d{4}/.test(dateStr)) {
-                                            dateStr += ' ' + new Date().getFullYear();
-                                        }
-                                        const parsedDate = new Date(dateStr);
+                                        const parsedDate = new Date(dateMatch[1]);
                                         if (!isNaN(parsedDate.getTime())) {
                                             date = parsedDate.toISOString().split('T')[0];
                                         }
-                                    } catch (e) {
-                                        console.log('Date parse error:', e);
-                                    }
+                                    } catch (e) {}
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Determine currency - default to THB for Thai App Store
+                        let currency = 'THB';
+                        if (line.includes('$') && !line.includes('฿')) currency = 'USD';
+                        else if (line.includes('€')) currency = 'EUR';
+                        
+                        usedAmounts.add(amount);
+                        expenses.push({
+                            description: description.substring(0, 50),
+                            amount: amount,
+                            currency: currency,
+                            date: date,
+                            category: guessCategory(description) || 'subscriptions',
+                            selected: true,
+                            rawLine: line
+                        });
+                        
+                        break;
+                    }
+                }
+            }
+            
+            // Second pass: if we found amounts but didn't match them, try to associate with app names
+            if (expenses.length === 0 && allAmounts.length > 0) {
+                console.log('Trying fallback amount matching...');
+                
+                // Look for common app/service names in the text
+                const appNames = [
+                    'Duolingo', 'iCloud', 'ChatGPT', 'Netflix', 'Spotify', 'YouTube', 
+                    'Apple Music', 'Disney', 'HBO', 'Amazon', 'Google', 'Microsoft',
+                    'Adobe', 'Dropbox', 'Notion', 'Slack', 'Zoom', 'Claude', 'OpenAI'
+                ];
+                
+                for (const appName of appNames) {
+                    const appRegex = new RegExp(appName + '[^฿$€]*[฿$€B]?\\s*(\\d{1,3}(?:,\\d{3})*\\.\\d{2})', 'i');
+                    const appMatch = text.match(appRegex);
+                    if (appMatch) {
+                        const amount = parseFloat(appMatch[1].replace(/,/g, ''));
+                        if (!usedAmounts.has(amount) && amount >= 1) {
+                            usedAmounts.add(amount);
+                            
+                            // Try to find date near this match
+                            let date = new Date().toISOString().split('T')[0];
+                            const nearbyText = text.substring(Math.max(0, appMatch.index - 100), appMatch.index);
+                            for (const datePattern of datePatterns) {
+                                const dateMatch = nearbyText.match(datePattern);
+                                if (dateMatch) {
+                                    try {
+                                        const parsedDate = new Date(dateMatch[1]);
+                                        if (!isNaN(parsedDate.getTime())) {
+                                            date = parsedDate.toISOString().split('T')[0];
+                                        }
+                                    } catch (e) {}
                                     break;
                                 }
                             }
                             
-                            // Determine currency
-                            let currency = 'USD'; // Default to USD for App Store
-                            if (line.includes('฿') || line.toLowerCase().includes('thb') || line.toLowerCase().includes('baht')) {
-                                currency = 'THB';
-                            } else if (line.includes('€') || line.toLowerCase().includes('eur')) {
-                                currency = 'EUR';
-                            }
-                            
                             expenses.push({
-                                description: description.substring(0, 50),
+                                description: appName,
                                 amount: amount,
-                                currency: currency,
+                                currency: 'THB',
                                 date: date,
-                                category: guessCategory(description) || 'subscriptions', // Default to subscriptions for app purchases
+                                category: 'subscriptions',
                                 selected: true,
-                                rawLine: line // Keep for debugging
+                                rawLine: appMatch[0]
                             });
-                            
-                            break; // Move to next line after finding a match
                         }
                     }
                 }
@@ -1129,7 +1184,7 @@
             for (const exp of expenses) {
                 const isDupe = unique.some(u => 
                     Math.abs(u.amount - exp.amount) < 0.01 && 
-                    u.description.toLowerCase() === exp.description.toLowerCase()
+                    u.description.toLowerCase().includes(exp.description.toLowerCase().substring(0, 5))
                 );
                 if (!isDupe) {
                     unique.push(exp);
