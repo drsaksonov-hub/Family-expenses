@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Family Expenses">
     <meta name="theme-color" content="#0a0a0f">
-    <title>Family Expense Tracker</title>
+    <title>Family Expense Tracker v2.1</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -308,7 +308,7 @@
     <div class="bg-gradient"></div>
     <header class="header">
         <div class="header-content">
-            <div class="logo">Family Expenses</div>
+            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v2.1</span></div>
             <div class="header-date" id="currentDate"></div>
         </div>
     </header>
@@ -972,7 +972,8 @@
             
             try {
                 document.querySelector('.processing-text').textContent = 'Scanning for expenses...';
-                const result = await Tesseract.recognize(imageData, 'eng', {
+                // Use Thai + English for better recognition of Thai bank messages
+                const result = await Tesseract.recognize(imageData, 'tha+eng', {
                     logger: m => {
                         if (m.status === 'recognizing text') {
                             document.querySelector('.processing-text').textContent = `Scanning... ${Math.round(m.progress * 100)}%`;
@@ -1012,37 +1013,28 @@
             const expenses = [];
             const lines = text.split('\n').filter(line => line.trim().length > 2);
             
+            console.log('Raw text:', text);
             console.log('Parsing lines:', lines);
             
-            // First, let's look for Thai Baht amounts (฿X,XXX.XX or BXXX.XX patterns)
-            // The OCR might read ฿ as B or other characters
+            // ============================================
+            // THAI BANK SMS FORMAT
+            // Pattern: "ชำระ X,XXX.XXบ" (payment) followed by vendor
+            // We want to SKIP "เหลือ" (remaining balance)
+            // ============================================
             
-            // Patterns specifically for Thai App Store format
-            const patterns = [
-                // Thai Baht: ฿X,XXX.XX or ฿XXX.XX (฿ might be read as B, 8, or similar)
-                /^(.+?)\s+[฿B8]\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*$/i,
-                /^(.+?)\s+(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*[฿B]\s*$/i,
-                // Amount at end of line with comma thousands separator
-                /^(.{3,50}?)\s+[฿B8]?(\d{1,3},\d{3}(?:\.\d{2})?)\s*$/,
-                /^(.{3,50}?)\s+[฿B8]?(\d{2,3}\.\d{2})\s*$/,
-                // USD format
-                /^(.+?)\s+\$\s*(\d+(?:\.\d{2})?)\s*$/i,
-                /^(.+?)\s+(\d+(?:\.\d{2})?)\s*(?:USD)\s*$/i,
-                // Euro format
-                /^(.+?)\s+€\s*(\d+(?:\.\d{2})?)\s*$/i,
-                // Generic: text followed by number.XX at end
-                /^(.{3,50}?)\s+(\d{1,6}(?:\.\d{2}))\s*$/,
-            ];
+            // Thai payment pattern: ชำระ followed by amount and บ (Baht)
+            const thaiPaymentRegex = /ชำระ\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*บ/g;
             
-            // Also scan for amounts anywhere in text and associate with nearby text
-            // This handles cases where OCR splits lines differently
-            const amountRegex = /[฿B8$€]?\s*(\d{1,3}(?:,\d{3})*\.\d{2})/g;
-            const allAmounts = [];
+            // Vendor patterns (usually @DOMAIN.COM format)
+            const vendorRegex = /@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/gi;
+            
+            // Find all Thai payments
             let match;
-            while ((match = amountRegex.exec(text)) !== null) {
+            const thaiPayments = [];
+            while ((match = thaiPaymentRegex.exec(text)) !== null) {
                 const amount = parseFloat(match[1].replace(/,/g, ''));
-                if (amount >= 1 && amount < 1000000) {
-                    allAmounts.push({
+                if (amount > 0 && amount < 1000000) {
+                    thaiPayments.push({
                         amount: amount,
                         index: match.index,
                         fullMatch: match[0]
@@ -1050,141 +1042,115 @@
                 }
             }
             
-            console.log('Found amounts in text:', allAmounts);
+            console.log('Thai payments found:', thaiPayments);
             
-            // Date patterns
-            const datePatterns = [
-                /(\d{1,2}\s+\w{3}\s+\d{4})/i,       // 21 Nov 2025
-                /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})/,
-                /(\w{3}\s+\d{1,2},?\s*\d{4})/i,
-            ];
-            
-            // Track which amounts we've used
-            const usedAmounts = new Set();
-            
-            // First pass: try line-by-line pattern matching
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                
-                // Skip headers, totals, and short lines
-                if (line.length < 5) continue;
-                if (/^(total|subtotal|tax|balance|date|>)/i.test(line)) continue;
-                if (/^total\s/i.test(line)) continue;
-                
-                for (const pattern of patterns) {
-                    const match = line.match(pattern);
-                    if (match) {
-                        let description = match[1] ? match[1].trim() : '';
-                        let amountStr = match[2];
-                        
-                        const amount = parseFloat(amountStr.replace(/,/g, ''));
-                        
-                        // Skip if already used this amount or invalid
-                        if (usedAmounts.has(amount) || amount < 1 || amount > 100000) continue;
-                        if (description.length < 2) continue;
-                        
-                        // Clean description - remove date prefixes and "Subscription" suffix
-                        description = description
-                            .replace(/^\d{1,2}\s+\w{3}\s+\d{4}\s*/i, '')
-                            .replace(/\s*subscription\s*$/i, '')
-                            .replace(/\s+/g, ' ')
-                            .trim();
-                        
-                        if (description.length < 2 || /^(total|subscription)$/i.test(description)) continue;
-                        
-                        // Find associated date (look at current line and previous lines)
-                        let date = new Date().toISOString().split('T')[0];
-                        for (let j = i; j >= Math.max(0, i - 3); j--) {
-                            for (const datePattern of datePatterns) {
-                                const dateMatch = lines[j].match(datePattern);
-                                if (dateMatch) {
-                                    try {
-                                        const parsedDate = new Date(dateMatch[1]);
-                                        if (!isNaN(parsedDate.getTime())) {
-                                            date = parsedDate.toISOString().split('T')[0];
-                                        }
-                                    } catch (e) {}
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        // Determine currency - default to THB for Thai App Store
-                        let currency = 'THB';
-                        if (line.includes('$') && !line.includes('฿')) currency = 'USD';
-                        else if (line.includes('€')) currency = 'EUR';
-                        
-                        usedAmounts.add(amount);
-                        expenses.push({
-                            description: description.substring(0, 50),
-                            amount: amount,
-                            currency: currency,
-                            date: date,
-                            category: guessCategory(description) || 'subscriptions',
-                            selected: true,
-                            rawLine: line
-                        });
-                        
-                        break;
-                    }
-                }
+            // Find all vendors
+            const vendors = [];
+            while ((match = vendorRegex.exec(text)) !== null) {
+                vendors.push({
+                    vendor: match[1],
+                    index: match.index
+                });
             }
             
-            // Second pass: if we found amounts but didn't match them, try to associate with app names
-            if (expenses.length === 0 && allAmounts.length > 0) {
-                console.log('Trying fallback amount matching...');
+            console.log('Vendors found:', vendors);
+            
+            // Match payments with vendors (find closest vendor after each payment)
+            for (const payment of thaiPayments) {
+                let vendorName = 'Unknown';
+                let minDistance = Infinity;
                 
-                // Look for common app/service names in the text
-                const appNames = [
-                    'Duolingo', 'iCloud', 'ChatGPT', 'Netflix', 'Spotify', 'YouTube', 
-                    'Apple Music', 'Disney', 'HBO', 'Amazon', 'Google', 'Microsoft',
-                    'Adobe', 'Dropbox', 'Notion', 'Slack', 'Zoom', 'Claude', 'OpenAI'
+                for (const v of vendors) {
+                    const distance = v.index - payment.index;
+                    if (distance > 0 && distance < minDistance && distance < 200) {
+                        minDistance = distance;
+                        vendorName = v.vendor.replace(/^www\./i, '').split('.')[0];
+                    }
+                }
+                
+                // Capitalize vendor name
+                vendorName = vendorName.charAt(0).toUpperCase() + vendorName.slice(1).toLowerCase();
+                
+                expenses.push({
+                    description: vendorName,
+                    amount: payment.amount,
+                    currency: 'THB',
+                    date: new Date().toISOString().split('T')[0],
+                    category: guessCategory(vendorName) || guessCategoryFromVendor(vendorName),
+                    selected: true
+                });
+            }
+            
+            // ============================================
+            // APP STORE / GENERAL FORMAT
+            // ============================================
+            if (expenses.length === 0) {
+                // Patterns for App Store and general formats
+                const patterns = [
+                    // Thai Baht: ฿X,XXX.XX (฿ might be read as B or 8)
+                    /^(.+?)\s+[฿B8]\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*$/i,
+                    /^(.+?)\s+(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*[฿B]\s*$/i,
+                    /^(.{3,50}?)\s+[฿B8]?(\d{1,3},\d{3}(?:\.\d{2})?)\s*$/,
+                    /^(.{3,50}?)\s+[฿B8]?(\d{2,3}\.\d{2})\s*$/,
+                    // USD format
+                    /^(.+?)\s+\$\s*(\d+(?:\.\d{2})?)\s*$/i,
+                    // Generic: text followed by number.XX at end
+                    /^(.{3,50}?)\s+(\d{1,6}(?:\.\d{2}))\s*$/,
                 ];
                 
-                for (const appName of appNames) {
-                    const appRegex = new RegExp(appName + '[^฿$€]*[฿$€B]?\\s*(\\d{1,3}(?:,\\d{3})*\\.\\d{2})', 'i');
-                    const appMatch = text.match(appRegex);
-                    if (appMatch) {
-                        const amount = parseFloat(appMatch[1].replace(/,/g, ''));
-                        if (!usedAmounts.has(amount) && amount >= 1) {
+                const usedAmounts = new Set();
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    
+                    if (line.length < 5) continue;
+                    if (/^(total|subtotal|tax|เหลือ|balance|>)/i.test(line)) continue;
+                    
+                    for (const pattern of patterns) {
+                        const match = line.match(pattern);
+                        if (match) {
+                            let description = match[1] ? match[1].trim() : '';
+                            let amountStr = match[2];
+                            
+                            const amount = parseFloat(amountStr.replace(/,/g, ''));
+                            
+                            if (usedAmounts.has(amount) || amount < 1 || amount > 100000) continue;
+                            if (description.length < 2) continue;
+                            
+                            description = description
+                                .replace(/^\d{1,2}\s+\w{3}\s+\d{4}\s*/i, '')
+                                .replace(/\s*subscription\s*$/i, '')
+                                .replace(/\s+/g, ' ')
+                                .trim();
+                            
+                            if (description.length < 2) continue;
+                            
+                            let currency = 'THB';
+                            if (line.includes('$') && !line.includes('฿')) currency = 'USD';
+                            else if (line.includes('€')) currency = 'EUR';
+                            
                             usedAmounts.add(amount);
-                            
-                            // Try to find date near this match
-                            let date = new Date().toISOString().split('T')[0];
-                            const nearbyText = text.substring(Math.max(0, appMatch.index - 100), appMatch.index);
-                            for (const datePattern of datePatterns) {
-                                const dateMatch = nearbyText.match(datePattern);
-                                if (dateMatch) {
-                                    try {
-                                        const parsedDate = new Date(dateMatch[1]);
-                                        if (!isNaN(parsedDate.getTime())) {
-                                            date = parsedDate.toISOString().split('T')[0];
-                                        }
-                                    } catch (e) {}
-                                    break;
-                                }
-                            }
-                            
                             expenses.push({
-                                description: appName,
+                                description: description.substring(0, 50),
                                 amount: amount,
-                                currency: 'THB',
-                                date: date,
-                                category: 'subscriptions',
-                                selected: true,
-                                rawLine: appMatch[0]
+                                currency: currency,
+                                date: new Date().toISOString().split('T')[0],
+                                category: guessCategory(description) || 'subscriptions',
+                                selected: true
                             });
+                            
+                            break;
                         }
                     }
                 }
             }
             
-            // Remove duplicates
+            // Remove exact duplicates (same amount AND same vendor)
             const unique = [];
             for (const exp of expenses) {
                 const isDupe = unique.some(u => 
                     Math.abs(u.amount - exp.amount) < 0.01 && 
-                    u.description.toLowerCase().includes(exp.description.toLowerCase().substring(0, 5))
+                    u.description.toLowerCase() === exp.description.toLowerCase()
                 );
                 if (!isDupe) {
                     unique.push(exp);
@@ -1193,6 +1159,17 @@
             
             console.log('Detected expenses:', unique);
             return unique;
+        }
+        
+        function guessCategoryFromVendor(vendor) {
+            const v = vendor.toLowerCase();
+            if (v.includes('grab')) return 'transport';
+            if (v.includes('food') || v.includes('panda')) return 'dining';
+            if (v.includes('steam') || v.includes('game') || v.includes('playstation') || v.includes('xbox')) return 'entertainment';
+            if (v.includes('netflix') || v.includes('spotify') || v.includes('youtube') || v.includes('disney')) return 'subscriptions';
+            if (v.includes('lazada') || v.includes('shopee') || v.includes('amazon')) return 'shopping';
+            if (v.includes('google') || v.includes('apple') || v.includes('icloud')) return 'subscriptions';
+            return 'other';
         }
 
         function displayMultiExpenses(expenses) {
