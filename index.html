@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Family Expenses">
+    <meta name="theme-color" content="#0a0a0f">
+    <title>Family Expense Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-elevated: #1a1a24;
+            --bg-input: #0f0f16;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606070;
+            --accent-cyan: #00e5cc;
+            --accent-purple: #a855f7;
+            --accent-pink: #ec4899;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+            --accent-orange: #f97316;
+            --border: rgba(255,255,255,0.08);
+            --glow: rgba(0, 229, 204, 0.15);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 100px;
+        }
+        .bg-gradient {
+            position: fixed; top: 0; left: 0; right: 0; height: 400px;
+            background: radial-gradient(ellipse at 50% 0%, rgba(0, 229, 204, 0.08) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 20%, rgba(168, 85, 247, 0.06) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
+        .header {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+        }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 600px; margin: 0 auto; }
+        .logo {
+            font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .header-date { font-size: 0.85rem; color: var(--text-secondary); }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; position: relative; z-index: 1; }
+        .budget-card {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+            border-radius: 24px; padding: 24px; margin-bottom: 24px;
+            border: 1px solid var(--border); position: relative; overflow: hidden;
+        }
+        .budget-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-pink));
+        }
+        .budget-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        .budget-title { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+        .budget-amount { font-size: 2.5rem; font-weight: 700; }
+        .budget-amount .currency { font-size: 1.5rem; color: var(--text-secondary); font-weight: 500; }
+        .budget-remaining { text-align: right; }
+        .budget-remaining-label { font-size: 0.8rem; color: var(--text-muted); }
+        .budget-remaining-amount { font-size: 1.3rem; font-weight: 600; color: var(--accent-green); }
+        .budget-remaining-amount.over-budget { color: var(--accent-red); }
+        .budget-progress { height: 8px; background: var(--bg-input); border-radius: 4px; overflow: hidden; margin-top: 16px; }
+        .budget-progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple)); border-radius: 4px; transition: width 0.5s ease; }
+        .budget-progress-bar.over-budget { background: linear-gradient(90deg, var(--accent-orange), var(--accent-red)); }
+        .budget-meta { display: flex; justify-content: space-between; margin-top: 12px; font-size: 0.8rem; color: var(--text-muted); }
+        .quick-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+        .action-btn {
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            padding: 16px 8px; background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; color: var(--text-primary); font-size: 0.75rem;
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        .action-btn:hover, .action-btn:active { background: var(--bg-elevated); border-color: var(--accent-cyan); transform: translateY(-2px); }
+        .action-btn svg { width: 28px; height: 28px; stroke: var(--accent-cyan); }
+        .action-btn.camera svg { stroke: var(--accent-purple); }
+        .action-btn.voice svg { stroke: var(--accent-pink); }
+        .action-btn.upload svg { stroke: var(--accent-orange); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .section-title { font-size: 1.1rem; font-weight: 600; }
+        .section-link { font-size: 0.85rem; color: var(--accent-cyan); text-decoration: none; }
+        .chart-container { background: var(--bg-card); border-radius: 20px; padding: 20px; margin-bottom: 24px; border: 1px solid var(--border); }
+        .chart-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .chart-tab {
+            padding: 8px 16px; border-radius: 20px; font-size: 0.85rem;
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;
+        }
+        .chart-tab.active { background: var(--accent-cyan); color: var(--bg-dark); border-color: var(--accent-cyan); font-weight: 500; }
+        .chart-wrapper { height: 220px; position: relative; }
+        .category-list, .expense-list { display: flex; flex-direction: column; gap: 10px; }
+        .category-item, .expense-item {
+            display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+            background: var(--bg-card); border-radius: 14px; border: 1px solid var(--border);
+        }
+        .expense-item { cursor: pointer; transition: all 0.2s ease; }
+        .expense-item:hover { border-color: rgba(0, 229, 204, 0.3); }
+        .category-icon, .expense-icon {
+            width: 42px; height: 42px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+        }
+        .category-info, .expense-info { flex: 1; }
+        .category-name, .expense-desc { font-weight: 500; margin-bottom: 2px; }
+        .expense-meta { font-size: 0.8rem; color: var(--text-muted); }
+        .category-bar { height: 4px; background: var(--bg-input); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+        .category-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s ease; }
+        .category-amount, .expense-amount { font-weight: 600; font-size: 1rem; }
+        .category-percent { font-size: 0.75rem; color: var(--text-muted); }
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            padding: 12px 20px 28px; z-index: 100;
+        }
+        .nav-items { display: flex; justify-content: space-around; max-width: 400px; margin: 0 auto; }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            padding: 8px 16px; border-radius: 12px; background: transparent; border: none;
+            color: var(--text-muted); font-size: 0.7rem; cursor: pointer; transition: all 0.2s ease;
+        }
+        .nav-item.active { color: var(--accent-cyan); }
+        .nav-item svg { width: 24px; height: 24px; }
+        .nav-item.add-btn {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            color: var(--bg-dark); padding: 12px 24px; border-radius: 50px;
+            margin-top: -20px; box-shadow: 0 4px 20px var(--glow);
+        }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 200; display: none; align-items: flex-end; justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-card); border-radius: 24px 24px 0 0;
+            width: 100%; max-width: 600px; max-height: 90vh;
+            overflow-y: auto; padding: 24px; animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-title { font-size: 1.3rem; font-weight: 600; }
+        .modal-close {
+            width: 36px; height: 36px; border-radius: 50%; background: var(--bg-input);
+            border: none; color: var(--text-primary); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
+        .form-input {
+            width: 100%; padding: 14px 16px; background: var(--bg-input);
+            border: 1px solid var(--border); border-radius: 12px;
+            color: var(--text-primary); font-size: 1rem; font-family: inherit; transition: all 0.2s ease;
+        }
+        .form-input:focus { outline: none; border-color: var(--accent-cyan); box-shadow: 0 0 0 3px var(--glow); }
+        .form-input::placeholder { color: var(--text-muted); }
+        .amount-input-wrapper { display: flex; gap: 10px; }
+        .currency-select {
+            width: 100px; padding: 14px 12px; background: var(--bg-input);
+            border: 1px solid var(--border); border-radius: 12px;
+            color: var(--text-primary); font-size: 1rem; font-family: inherit; cursor: pointer;
+        }
+        .currency-select:focus { outline: none; border-color: var(--accent-cyan); }
+        .amount-input { flex: 1; }
+        .converted-amount { font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; padding-left: 4px; }
+        .category-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .category-option {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            padding: 12px 8px; background: var(--bg-input); border: 2px solid var(--border);
+            border-radius: 12px; cursor: pointer; transition: all 0.2s ease;
+        }
+        .category-option:hover { border-color: var(--accent-cyan); }
+        .category-option.selected { border-color: var(--accent-cyan); background: rgba(0, 229, 204, 0.1); }
+        .category-option-icon { font-size: 1.5rem; }
+        .category-option-name { font-size: 0.7rem; color: var(--text-secondary); text-align: center; }
+        .submit-btn {
+            width: 100%; padding: 16px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border: none; border-radius: 14px; color: var(--bg-dark);
+            font-size: 1rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s ease;
+        }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--glow); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .voice-container { text-align: center; padding: 30px 20px; }
+        .voice-btn {
+            width: 100px; height: 100px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px; transition: all 0.2s ease;
+        }
+        .voice-btn.recording { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(236, 72, 153, 0); } 100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); } }
+        .voice-btn svg { width: 40px; height: 40px; stroke: white; }
+        .voice-status { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px; }
+        .voice-transcript { background: var(--bg-input); border-radius: 12px; padding: 16px; min-height: 80px; text-align: left; color: var(--text-primary); }
+        .upload-area {
+            border: 2px dashed var(--border); border-radius: 16px; padding: 40px 20px;
+            text-align: center; cursor: pointer; transition: all 0.2s ease;
+        }
+        .upload-area:hover { border-color: var(--accent-cyan); background: rgba(0, 229, 204, 0.05); }
+        .upload-area svg { width: 48px; height: 48px; stroke: var(--text-muted); margin-bottom: 12px; }
+        .upload-area p { color: var(--text-secondary); font-size: 0.9rem; }
+        .upload-preview { position: relative; margin-top: 16px; }
+        .upload-preview img { max-width: 100%; border-radius: 12px; }
+        .upload-preview-remove { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.7); border: none; color: white; cursor: pointer; }
+        .processing-indicator { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 30px; }
+        .spinner { width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--accent-cyan); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .processing-text { color: var(--text-secondary); }
+        .camera-options { display: flex; gap: 12px; margin-bottom: 20px; }
+        .camera-option {
+            flex: 1; padding: 16px; background: var(--bg-input); border: 2px solid var(--border);
+            border-radius: 14px; text-align: center; cursor: pointer; transition: all 0.2s ease;
+        }
+        .camera-option:hover { border-color: var(--accent-cyan); }
+        .camera-option svg { width: 32px; height: 32px; stroke: var(--accent-cyan); margin-bottom: 8px; }
+        .camera-option span { display: block; font-size: 0.85rem; color: var(--text-secondary); }
+        .settings-section { margin-bottom: 24px; }
+        .settings-title { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        .settings-item {
+            display: flex; align-items: center; justify-content: space-between; padding: 16px;
+            background: var(--bg-card); border-radius: 14px; margin-bottom: 10px; border: 1px solid var(--border); cursor: pointer;
+        }
+        .settings-item-info { flex: 1; }
+        .settings-item-label { font-weight: 500; margin-bottom: 2px; }
+        .settings-item-desc { font-size: 0.8rem; color: var(--text-muted); }
+        .toggle-switch { width: 52px; height: 28px; background: var(--bg-input); border-radius: 14px; padding: 2px; cursor: pointer; transition: all 0.2s ease; }
+        .toggle-switch.active { background: var(--accent-cyan); }
+        .toggle-switch-knob { width: 24px; height: 24px; background: white; border-radius: 50%; transition: all 0.2s ease; }
+        .toggle-switch.active .toggle-switch-knob { transform: translateX(24px); }
+        .time-picker { padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-family: inherit; }
+        .api-key-input { width: 100%; padding: 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-family: monospace; font-size: 0.85rem; }
+        .api-key-input:focus { outline: none; border-color: var(--accent-cyan); }
+        .api-key-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; }
+        .api-key-note a { color: var(--accent-cyan); }
+        .budget-input-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .budget-input-row:last-child { border-bottom: none; }
+        .budget-cat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .budget-cat-name { flex: 1; font-weight: 500; }
+        .budget-cat-input { width: 120px; padding: 10px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-size: 0.95rem; text-align: right; font-family: inherit; }
+        .budget-cat-input:focus { outline: none; border-color: var(--accent-cyan); }
+        .view-tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+        .view-tab { padding: 10px 18px; border-radius: 10px; font-size: 0.9rem; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; white-space: nowrap; transition: all 0.2s ease; }
+        .view-tab.active { background: var(--accent-cyan); color: var(--bg-dark); border-color: var(--accent-cyan); font-weight: 500; }
+        .empty-state { text-align: center; padding: 40px 20px; }
+        .empty-state svg { width: 80px; height: 80px; stroke: var(--text-muted); margin-bottom: 16px; }
+        .empty-state h3 { font-size: 1.1rem; margin-bottom: 8px; }
+        .empty-state p { color: var(--text-muted); font-size: 0.9rem; }
+        .toast {
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+            background: var(--bg-elevated); border: 1px solid var(--border);
+            padding: 14px 24px; border-radius: 12px; color: var(--text-primary);
+            font-size: 0.9rem; z-index: 300; opacity: 0; transition: opacity 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+        .toast.show { opacity: 1; }
+        .toast.success { border-color: var(--accent-green); }
+        .toast.error { border-color: var(--accent-red); }
+        .hidden { display: none !important; }
+        .mt-4 { margin-top: 16px; }
+        .mb-4 { margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">Family Expenses</div>
+            <div class="header-date" id="currentDate"></div>
+        </div>
+    </header>
+    <main class="container" id="mainContent">
+        <div id="dashboardView">
+            <div class="budget-card">
+                <div class="budget-header">
+                    <div>
+                        <div class="budget-title">Monthly Spending</div>
+                        <div class="budget-amount"><span class="currency">฿</span><span id="totalSpent">0</span></div>
+                    </div>
+                    <div class="budget-remaining">
+                        <div class="budget-remaining-label">Budget Remaining</div>
+                        <div class="budget-remaining-amount" id="budgetRemaining">฿0</div>
+                    </div>
+                </div>
+                <div class="budget-progress"><div class="budget-progress-bar" id="budgetProgressBar" style="width: 0%"></div></div>
+                <div class="budget-meta"><span id="budgetPercent">0% of budget</span><span id="daysRemaining">0 days left</span></div>
+            </div>
+            <div class="quick-actions">
+                <button class="action-btn" onclick="openModal('textModal')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    <span>Manual</span>
+                </button>
+                <button class="action-btn camera" onclick="openModal('cameraModal')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <span>Camera</span>
+                </button>
+                <button class="action-btn voice" onclick="openModal('voiceModal')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    <span>Voice</span>
+                </button>
+                <button class="action-btn upload" onclick="openModal('uploadModal')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span>Upload</span>
+                </button>
+            </div>
+            <div class="chart-container">
+                <div class="section-header"><h2 class="section-title">Spending Overview</h2></div>
+                <div class="chart-tabs">
+                    <button class="chart-tab active" onclick="switchChart('pie')">Categories</button>
+                    <button class="chart-tab" onclick="switchChart('bar')">Daily</button>
+                    <button class="chart-tab" onclick="switchChart('line')">Trend</button>
+                </div>
+                <div class="chart-wrapper"><canvas id="mainChart"></canvas></div>
+            </div>
+            <div class="section-header"><h2 class="section-title">By Category</h2><a href="#" class="section-link" onclick="showView('categories'); return false;">See all</a></div>
+            <div class="category-list" id="categoryList"></div>
+            <div class="section-header mt-4"><h2 class="section-title">Recent Expenses</h2><a href="#" class="section-link" onclick="showView('expenses'); return false;">See all</a></div>
+            <div class="expense-list" id="recentExpenses"></div>
+        </div>
+        <div id="expensesView" class="hidden">
+            <div class="section-header"><h2 class="section-title">All Expenses</h2></div>
+            <div class="view-tabs">
+                <button class="view-tab active" onclick="filterExpenses('all')">All</button>
+                <button class="view-tab" onclick="filterExpenses('today')">Today</button>
+                <button class="view-tab" onclick="filterExpenses('week')">This Week</button>
+                <button class="view-tab" onclick="filterExpenses('month')">This Month</button>
+            </div>
+            <div class="expense-list" id="allExpenses"></div>
+        </div>
+        <div id="categoriesView" class="hidden">
+            <div class="section-header"><h2 class="section-title">Categories</h2></div>
+            <div class="category-list" id="allCategories"></div>
+        </div>
+        <div id="settingsView" class="hidden">
+            <div class="section-header"><h2 class="section-title">Settings</h2></div>
+            <div class="settings-section">
+                <div class="settings-title">Budget</div>
+                <div class="settings-item" onclick="openModal('budgetModal')">
+                    <div class="settings-item-info"><div class="settings-item-label">Monthly Budget</div><div class="settings-item-desc">Set spending limits by category</div></div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-title">Notifications</div>
+                <div class="settings-item">
+                    <div class="settings-item-info"><div class="settings-item-label">Daily Summary</div><div class="settings-item-desc">Morning expense report</div></div>
+                    <div class="toggle-switch active" id="notificationToggle" onclick="toggleNotifications()"><div class="toggle-switch-knob"></div></div>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-item-info"><div class="settings-item-label">Notification Time</div><div class="settings-item-desc">When to send daily summary</div></div>
+                    <input type="time" class="time-picker" id="notificationTime" value="08:00" onchange="saveSettings()">
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-title">Translation API</div>
+                <div class="settings-item" style="flex-direction: column; align-items: stretch; cursor: default;">
+                    <div class="settings-item-info" style="margin-bottom: 12px;"><div class="settings-item-label">Google Cloud Translation API Key</div><div class="settings-item-desc">Required for Thai text translation</div></div>
+                    <input type="password" class="api-key-input" id="googleApiKey" placeholder="Enter your API key" onchange="saveSettings()">
+                    <div class="api-key-note">Get your API key from <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a></div>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-title">Family Members</div>
+                <div class="settings-item">
+                    <div class="settings-item-info"><div class="settings-item-label">Your Name</div></div>
+                    <input type="text" class="form-input" id="userName" style="width: 150px; padding: 10px;" placeholder="Your name" onchange="saveSettings()">
+                </div>
+                <div class="settings-item">
+                    <div class="settings-item-info"><div class="settings-item-label">Partner's Name</div></div>
+                    <input type="text" class="form-input" id="partnerName" style="width: 150px; padding: 10px;" placeholder="Partner name" onchange="saveSettings()">
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-title">Data</div>
+                <div class="settings-item" onclick="exportData()">
+                    <div class="settings-item-info"><div class="settings-item-label">Export Data</div><div class="settings-item-desc">Download all expenses as CSV</div></div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </div>
+                <div class="settings-item" onclick="clearAllData()">
+                    <div class="settings-item-info"><div class="settings-item-label" style="color: var(--accent-red);">Clear All Data</div><div class="settings-item-desc">Delete all expenses and reset app</div></div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </div>
+            </div>
+        </div>
+    </main>
+    <nav class="bottom-nav">
+        <div class="nav-items">
+            <button class="nav-item active" id="navDashboard" onclick="showView('dashboard')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+                <span>Home</span>
+            </button>
+            <button class="nav-item" id="navExpenses" onclick="showView('expenses')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                <span>Expenses</span>
+            </button>
+            <button class="nav-item add-btn" onclick="openModal('textModal')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button class="nav-item" id="navCategories" onclick="showView('categories')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M12 2v20"/><path d="M2 12h20"/></svg>
+                <span>Categories</span>
+            </button>
+            <button class="nav-item" id="navSettings" onclick="showView('settings')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>Settings</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Text Input Modal -->
+    <div class="modal-overlay" id="textModal">
+        <div class="modal">
+            <div class="modal-header"><h2 class="modal-title">Add Expense</h2><button class="modal-close" onclick="closeModal('textModal')">✕</button></div>
+            <div class="form-group">
+                <label class="form-label">Amount</label>
+                <div class="amount-input-wrapper">
+                    <select class="currency-select" id="currencySelect" onchange="updateConversion()"><option value="THB">฿ THB</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option></select>
+                    <input type="number" class="form-input amount-input" id="amountInput" placeholder="0.00" step="0.01" oninput="updateConversion()">
+                </div>
+                <div class="converted-amount" id="convertedAmount"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="descriptionInput" placeholder="What did you spend on?"></div>
+            <div class="form-group"><label class="form-label">Category</label><div class="category-grid" id="categoryGrid"></div></div>
+            <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="dateInput"></div>
+            <button class="submit-btn" onclick="addExpense()">Add Expense</button>
+        </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div class="modal-overlay" id="cameraModal">
+        <div class="modal">
+            <div class="modal-header"><h2 class="modal-title">Scan Receipt</h2><button class="modal-close" onclick="closeModal('cameraModal')">✕</button></div>
+            <div class="camera-options">
+                <div class="camera-option" onclick="triggerCamera()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <span>Take Photo</span>
+                </div>
+                <div class="camera-option" onclick="triggerGallery()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+                    <span>Gallery</span>
+                </div>
+            </div>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleImageUpload(event)">
+            <input type="file" id="galleryInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+            <div id="cameraPreview" class="hidden">
+                <div class="upload-preview"><img id="cameraPreviewImage" src="" alt="Receipt preview"><button class="upload-preview-remove" onclick="clearCameraPreview()">✕</button></div>
+                <div id="ocrProcessing" class="processing-indicator hidden"><div class="spinner"></div><div class="processing-text">Scanning receipt...</div></div>
+                <div id="ocrResult" class="hidden mt-4">
+                    <div class="form-group"><label class="form-label">Detected Text</label><textarea class="form-input" id="ocrOriginalText" rows="3" readonly></textarea></div>
+                    <div class="form-group"><label class="form-label">Translated</label><textarea class="form-input" id="ocrTranslatedText" rows="2" readonly></textarea></div>
+                    <div class="form-group">
+                        <label class="form-label">Amount</label>
+                        <div class="amount-input-wrapper">
+                            <select class="currency-select" id="ocrCurrencySelect"><option value="THB">฿ THB</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option></select>
+                            <input type="number" class="form-input amount-input" id="ocrAmountInput" placeholder="0.00" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="ocrDescriptionInput" placeholder="What did you spend on?"></div>
+                    <div class="form-group"><label class="form-label">Category</label><div class="category-grid" id="ocrCategoryGrid"></div></div>
+                    <button class="submit-btn" onclick="addExpenseFromOCR()">Add Expense</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Modal -->
+    <div class="modal-overlay" id="voiceModal">
+        <div class="modal">
+            <div class="modal-header"><h2 class="modal-title">Voice Input</h2><button class="modal-close" onclick="closeModal('voiceModal')">✕</button></div>
+            <div class="voice-container">
+                <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceRecording()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                </button>
+                <div class="voice-status" id="voiceStatus">Tap to start recording</div>
+                <div class="voice-transcript" id="voiceTranscript"><span style="color: var(--text-muted);">Say: "I spent 500 baht on groceries"</span></div>
+            </div>
+            <div id="voiceResult" class="hidden mt-4">
+                <div class="form-group">
+                    <label class="form-label">Amount</label>
+                    <div class="amount-input-wrapper">
+                        <select class="currency-select" id="voiceCurrencySelect"><option value="THB">฿ THB</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option></select>
+                        <input type="number" class="form-input amount-input" id="voiceAmountInput" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="voiceDescriptionInput" placeholder="What did you spend on?"></div>
+                <div class="form-group"><label class="form-label">Category</label><div class="category-grid" id="voiceCategoryGrid"></div></div>
+                <button class="submit-btn" onclick="addExpenseFromVoice()">Add Expense</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal-overlay" id="uploadModal">
+        <div class="modal">
+            <div class="modal-header"><h2 class="modal-title">Import Statement</h2><button class="modal-close" onclick="closeModal('uploadModal')">✕</button></div>
+            <div class="upload-area" onclick="document.getElementById('statementInput').click()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <p>Tap to upload bank statement</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">Supports CSV files</p>
+            </div>
+            <input type="file" id="statementInput" accept=".csv" style="display: none;" onchange="handleStatementUpload(event)">
+            <div id="statementPreview" class="hidden mt-4">
+                <div class="form-group"><label class="form-label">Detected Transactions</label><div id="statementTransactions" class="expense-list"></div></div>
+                <button class="submit-btn" onclick="importAllTransactions()">Import All</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Modal -->
+    <div class="modal-overlay" id="budgetModal">
+        <div class="modal">
+            <div class="modal-header"><h2 class="modal-title">Monthly Budget</h2><button class="modal-close" onclick="closeModal('budgetModal')">✕</button></div>
+            <div class="form-group"><label class="form-label">Total Monthly Budget (฿)</label><input type="number" class="form-input" id="totalBudgetInput" placeholder="50000" step="1000"></div>
+            <div class="form-group"><label class="form-label">Budget by Category</label><div id="budgetCategoryList"></div></div>
+            <button class="submit-btn" onclick="saveBudget()">Save Budget</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const CATEGORIES = [
+            { id: 'groceries', name: 'Groceries', icon: '🛒', color: '#84cc16' },
+            { id: 'dining', name: 'Dining Out', icon: '🍽️', color: '#fb923c' },
+            { id: 'transport', name: 'Transport', icon: '🚗', color: '#3b82f6' },
+            { id: 'utilities', name: 'Utilities', icon: '💡', color: '#eab308' },
+            { id: 'kids', name: 'Kids', icon: '👶', color: '#f472b6' },
+            { id: 'education', name: 'Education', icon: '📚', color: '#06b6d4' },
+            { id: 'health', name: 'Healthcare', icon: '🏥', color: '#22c55e' },
+            { id: 'entertainment', name: 'Fun', icon: '🎬', color: '#a855f7' },
+            { id: 'shopping', name: 'Shopping', icon: '🛍️', color: '#ec4899' },
+            { id: 'housing', name: 'Housing', icon: '🏠', color: '#64748b' },
+            { id: 'subscriptions', name: 'Subscriptions', icon: '📱', color: '#6366f1' },
+            { id: 'travel', name: 'Travel', icon: '✈️', color: '#14b8a6' },
+            { id: 'personal', name: 'Personal', icon: '💅', color: '#f43f5e' },
+            { id: 'pets', name: 'Pets', icon: '🐕', color: '#8b5cf6' },
+            { id: 'gifts', name: 'Gifts', icon: '🎁', color: '#f97316' },
+            { id: 'other', name: 'Other', icon: '📌', color: '#78716c' }
+        ];
+        const EXCHANGE_RATES = { THB: 1, USD: 35.5, EUR: 38.2 };
+        let expenses = [], budgets = {}, settings = { notificationsEnabled: true, notificationTime: '08:00', googleApiKey: '', userName: '', partnerName: '', totalBudget: 50000 };
+        let selectedCategory = null, currentChart = null, currentChartType = 'pie', isRecording = false, recognition = null;
+
+        document.addEventListener('DOMContentLoaded', () => { loadData(); initializeUI(); initializeSpeechRecognition(); updateDashboard(); requestNotificationPermission(); });
+
+        function loadData() {
+            const e = localStorage.getItem('familyExpenses'), b = localStorage.getItem('familyBudgets'), s = localStorage.getItem('familySettings');
+            if (e) expenses = JSON.parse(e); if (b) budgets = JSON.parse(b); if (s) settings = { ...settings, ...JSON.parse(s) };
+        }
+        function saveData() { localStorage.setItem('familyExpenses', JSON.stringify(expenses)); localStorage.setItem('familyBudgets', JSON.stringify(budgets)); localStorage.setItem('familySettings', JSON.stringify(settings)); }
+
+        function initializeUI() {
+            const now = new Date();
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            document.getElementById('dateInput').value = now.toISOString().split('T')[0];
+            populateCategoryGrid('categoryGrid'); populateCategoryGrid('ocrCategoryGrid'); populateCategoryGrid('voiceCategoryGrid'); populateBudgetCategories();
+            document.getElementById('notificationTime').value = settings.notificationTime;
+            document.getElementById('googleApiKey').value = settings.googleApiKey;
+            document.getElementById('userName').value = settings.userName;
+            document.getElementById('partnerName').value = settings.partnerName;
+            document.getElementById('totalBudgetInput').value = settings.totalBudget;
+            if (settings.notificationsEnabled) document.getElementById('notificationToggle').classList.add('active');
+            else document.getElementById('notificationToggle').classList.remove('active');
+        }
+
+        function populateCategoryGrid(gridId) {
+            document.getElementById(gridId).innerHTML = CATEGORIES.map(cat => `<div class="category-option" data-category="${cat.id}" onclick="selectCategory('${gridId}', '${cat.id}')"><span class="category-option-icon">${cat.icon}</span><span class="category-option-name">${cat.name}</span></div>`).join('');
+        }
+
+        function populateBudgetCategories() {
+            document.getElementById('budgetCategoryList').innerHTML = CATEGORIES.map(cat => `<div class="budget-input-row"><div class="budget-cat-icon" style="background: ${cat.color}20;">${cat.icon}</div><span class="budget-cat-name">${cat.name}</span><input type="number" class="budget-cat-input" id="budget_${cat.id}" value="${budgets[cat.id] || ''}" placeholder="฿0" step="100"></div>`).join('');
+        }
+
+        function showView(viewName) {
+            ['dashboard', 'expenses', 'categories', 'settings'].forEach(v => { document.getElementById(v + 'View').classList.add('hidden'); document.getElementById('nav' + v.charAt(0).toUpperCase() + v.slice(1)).classList.remove('active'); });
+            document.getElementById(viewName + 'View').classList.remove('hidden');
+            document.getElementById('nav' + viewName.charAt(0).toUpperCase() + viewName.slice(1)).classList.add('active');
+            if (viewName === 'dashboard') updateDashboard(); else if (viewName === 'expenses') renderAllExpenses(); else if (viewName === 'categories') renderAllCategories();
+        }
+
+        function openModal(modalId) { document.getElementById(modalId).classList.add('active'); selectedCategory = null; if (modalId === 'textModal') { document.getElementById('amountInput').value = ''; document.getElementById('descriptionInput').value = ''; document.getElementById('currencySelect').value = 'THB'; document.getElementById('convertedAmount').textContent = ''; document.getElementById('dateInput').value = new Date().toISOString().split('T')[0]; document.querySelectorAll('#categoryGrid .category-option').forEach(el => el.classList.remove('selected')); } }
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); if (modalId === 'cameraModal') clearCameraPreview(); if (modalId === 'voiceModal' && isRecording) toggleVoiceRecording(); }
+
+        function selectCategory(gridId, categoryId) { document.querySelectorAll(`#${gridId} .category-option`).forEach(el => el.classList.remove('selected')); document.querySelector(`#${gridId} [data-category="${categoryId}"]`).classList.add('selected'); selectedCategory = categoryId; }
+        function convertToTHB(amount, currency) { return amount * EXCHANGE_RATES[currency]; }
+        function updateConversion() { const amount = parseFloat(document.getElementById('amountInput').value) || 0, currency = document.getElementById('currencySelect').value; if (currency !== 'THB' && amount > 0) document.getElementById('convertedAmount').textContent = `≈ ฿${formatNumber(convertToTHB(amount, currency))} THB`; else document.getElementById('convertedAmount').textContent = ''; }
+
+        function addExpense() {
+            const amount = parseFloat(document.getElementById('amountInput').value), currency = document.getElementById('currencySelect').value, description = document.getElementById('descriptionInput').value.trim(), date = document.getElementById('dateInput').value;
+            if (!amount || amount <= 0) { showToast('Please enter a valid amount', 'error'); return; }
+            if (!selectedCategory) { showToast('Please select a category', 'error'); return; }
+            expenses.push({ id: Date.now(), amount: convertToTHB(amount, currency), originalAmount: amount, originalCurrency: currency, description: description || getCategoryName(selectedCategory), category: selectedCategory, date: date, inputType: 'manual', createdAt: new Date().toISOString() });
+            saveData(); closeModal('textModal'); showToast('Expense added successfully', 'success'); updateDashboard();
+        }
+
+        function deleteExpense(id) { if (confirm('Delete this expense?')) { expenses = expenses.filter(e => e.id !== id); saveData(); updateDashboard(); renderAllExpenses(); showToast('Expense deleted', 'success'); } }
+
+        function triggerCamera() { document.getElementById('cameraInput').click(); }
+        function triggerGallery() { document.getElementById('galleryInput').click(); }
+        function handleImageUpload(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { document.getElementById('cameraPreviewImage').src = e.target.result; document.getElementById('cameraPreview').classList.remove('hidden'); processReceiptImage(e.target.result); }; reader.readAsDataURL(file); }
+        function clearCameraPreview() { document.getElementById('cameraPreview').classList.add('hidden'); document.getElementById('ocrResult').classList.add('hidden'); document.getElementById('cameraInput').value = ''; document.getElementById('galleryInput').value = ''; }
+
+        async function processReceiptImage(imageData) {
+            const processingEl = document.getElementById('ocrProcessing'), resultEl = document.getElementById('ocrResult');
+            processingEl.classList.remove('hidden'); resultEl.classList.add('hidden');
+            try {
+                const result = await Tesseract.recognize(imageData, 'tha+eng', { logger: m => { if (m.status === 'recognizing text') document.querySelector('.processing-text').textContent = `Scanning... ${Math.round(m.progress * 100)}%`; } });
+                const text = result.data.text;
+                document.getElementById('ocrOriginalText').value = text;
+                let translatedText = text;
+                if (settings.googleApiKey && /[\u0E00-\u0E7F]/.test(text)) { try { translatedText = await translateText(text, 'th', 'en'); } catch (e) { console.log('Translation failed:', e); } }
+                document.getElementById('ocrTranslatedText').value = translatedText;
+                const amount = extractAmount(text) || extractAmount(translatedText);
+                if (amount) document.getElementById('ocrAmountInput').value = amount;
+                const category = guessCategory(translatedText);
+                if (category) selectCategory('ocrCategoryGrid', category);
+                processingEl.classList.add('hidden'); resultEl.classList.remove('hidden');
+            } catch (error) { console.error('OCR Error:', error); processingEl.classList.add('hidden'); showToast('Failed to scan receipt', 'error'); }
+        }
+
+        async function translateText(text, from, to) {
+            const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${settings.googleApiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q: text, source: from, target: to, format: 'text' }) });
+            const data = await response.json(); return data.data.translations[0].translatedText;
+        }
+
+        function extractAmount(text) {
+            const patterns = [/(?:฿|THB|baht|บาท)\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/gi, /(\d+(?:,\d{3})*(?:\.\d{2})?)\s*(?:฿|THB|baht|บาท)/gi, /(?:total|รวม|ยอด|amount|net)\s*:?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/gi];
+            for (const pattern of patterns) { const match = pattern.exec(text); if (match) { const num = parseFloat(match[1].replace(/,/g, '')); if (num > 0 && num < 1000000) return num; } } return null;
+        }
+
+        function guessCategory(text) {
+            const lower = text.toLowerCase();
+            const keywords = { groceries: ['grocery', 'supermarket', 'tesco', 'lotus', 'big c', 'makro', '7-eleven'], dining: ['restaurant', 'cafe', 'coffee', 'food', 'lunch', 'dinner'], transport: ['taxi', 'grab', 'bolt', 'fuel', 'gas', 'parking', 'bts', 'mrt'], utilities: ['electric', 'water', 'internet', 'phone', 'ais', 'true'], health: ['hospital', 'clinic', 'pharmacy', 'medicine', 'doctor'], shopping: ['mall', 'shop', 'store', 'lazada', 'shopee'], kids: ['school', 'toy', 'diaper', 'baby', 'child'] };
+            for (const [category, kws] of Object.entries(keywords)) { if (kws.some(kw => lower.includes(kw))) return category; } return null;
+        }
+
+        function addExpenseFromOCR() {
+            const amount = parseFloat(document.getElementById('ocrAmountInput').value), currency = document.getElementById('ocrCurrencySelect').value, description = document.getElementById('ocrDescriptionInput').value.trim();
+            if (!amount || amount <= 0) { showToast('Please enter a valid amount', 'error'); return; }
+            if (!selectedCategory) { showToast('Please select a category', 'error'); return; }
+            expenses.push({ id: Date.now(), amount: convertToTHB(amount, currency), originalAmount: amount, originalCurrency: currency, description: description || getCategoryName(selectedCategory), category: selectedCategory, date: new Date().toISOString().split('T')[0], inputType: 'receipt', createdAt: new Date().toISOString() });
+            saveData(); closeModal('cameraModal'); showToast('Expense added from receipt', 'success'); updateDashboard();
+        }
+
+        function initializeSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition(); recognition.continuous = true; recognition.interimResults = true; recognition.lang = 'th-TH';
+                recognition.onresult = (event) => { let transcript = ''; for (let i = event.resultIndex; i < event.results.length; i++) transcript += event.results[i][0].transcript; document.getElementById('voiceTranscript').textContent = transcript; parseVoiceInput(transcript); };
+                recognition.onerror = (event) => { console.error('Speech error:', event.error); showToast('Voice recognition error', 'error'); stopRecording(); };
+                recognition.onend = () => { if (isRecording) recognition.start(); };
+            }
+        }
+
+        function toggleVoiceRecording() { if (!recognition) { showToast('Voice not supported', 'error'); return; } if (isRecording) stopRecording(); else startRecording(); }
+        function startRecording() { isRecording = true; document.getElementById('voiceBtn').classList.add('recording'); document.getElementById('voiceStatus').textContent = 'Listening...'; document.getElementById('voiceTranscript').textContent = ''; document.getElementById('voiceResult').classList.add('hidden'); recognition.start(); }
+        function stopRecording() { isRecording = false; document.getElementById('voiceBtn').classList.remove('recording'); document.getElementById('voiceStatus').textContent = 'Tap to start recording'; recognition.stop(); }
+
+        function parseVoiceInput(transcript) {
+            const lower = transcript.toLowerCase();
+            const patterns = [/(\d+(?:,\d{3})*(?:\.\d+)?)\s*(?:baht|บาท|฿)/gi, /(?:spent|spend|pay|paid|จ่าย|ใช้)\s*(\d+(?:,\d{3})*(?:\.\d+)?)/gi];
+            let amount = null, currency = 'THB';
+            for (const pattern of patterns) { const match = pattern.exec(lower); if (match) { amount = parseFloat(match[1].replace(/,/g, '')); if (lower.includes('dollar')) currency = 'USD'; else if (lower.includes('euro')) currency = 'EUR'; break; } }
+            const category = guessCategory(transcript);
+            if (amount) { document.getElementById('voiceAmountInput').value = amount; document.getElementById('voiceCurrencySelect').value = currency; document.getElementById('voiceDescriptionInput').value = transcript; if (category) selectCategory('voiceCategoryGrid', category); document.getElementById('voiceResult').classList.remove('hidden'); }
+        }
+
+        function addExpenseFromVoice() {
+            const amount = parseFloat(document.getElementById('voiceAmountInput').value), currency = document.getElementById('voiceCurrencySelect').value, description = document.getElementById('voiceDescriptionInput').value.trim();
+            if (!amount || amount <= 0) { showToast('Please enter a valid amount', 'error'); return; }
+            if (!selectedCategory) { showToast('Please select a category', 'error'); return; }
+            expenses.push({ id: Date.now(), amount: convertToTHB(amount, currency), originalAmount: amount, originalCurrency: currency, description: description || getCategoryName(selectedCategory), category: selectedCategory, date: new Date().toISOString().split('T')[0], inputType: 'voice', createdAt: new Date().toISOString() });
+            saveData(); closeModal('voiceModal'); showToast('Expense added from voice', 'success'); updateDashboard();
+        }
+
+        function handleStatementUpload(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const lines = e.target.result.split('\n'), transactions = [];
+                for (let i = 1; i < lines.length; i++) { const parts = lines[i].trim().split(','); if (parts.length >= 2) { const amount = parseFloat((parts[2] || parts[1]).replace(/[^\d.-]/g, '')); if (!isNaN(amount) && amount > 0) transactions.push({ date: parts[0] || new Date().toISOString().split('T')[0], description: parts[1] || 'Imported', amount: amount, category: guessCategory(parts[1]) || 'other' }); } }
+                displayStatementTransactions(transactions);
+            };
+            reader.readAsText(file);
+        }
+
+        function displayStatementTransactions(transactions) {
+            window.pendingTransactions = transactions;
+            document.getElementById('statementTransactions').innerHTML = transactions.map((t, i) => { const cat = CATEGORIES.find(c => c.id === t.category); return `<div class="expense-item"><div class="expense-icon" style="background: ${cat.color}20;">${cat.icon}</div><div class="expense-info"><div class="expense-desc">${t.description}</div><div class="expense-meta">${t.date}</div></div><div class="expense-amount">฿${formatNumber(t.amount)}</div></div>`; }).join('');
+            document.getElementById('statementPreview').classList.remove('hidden');
+        }
+
+        function importAllTransactions() {
+            if (!window.pendingTransactions || window.pendingTransactions.length === 0) { showToast('No transactions', 'error'); return; }
+            window.pendingTransactions.forEach(t => { expenses.push({ id: Date.now() + Math.random(), amount: t.amount, originalAmount: t.amount, originalCurrency: 'THB', description: t.description, category: t.category, date: t.date, inputType: 'statement', createdAt: new Date().toISOString() }); });
+            saveData(); closeModal('uploadModal'); showToast(`Imported ${window.pendingTransactions.length} transactions`, 'success'); window.pendingTransactions = []; updateDashboard();
+        }
+
+        function updateDashboard() {
+            const now = new Date(), currentMonth = now.getMonth(), currentYear = now.getFullYear();
+            const monthlyExpenses = expenses.filter(e => { const d = new Date(e.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
+            const totalSpent = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0), totalBudget = settings.totalBudget || 50000, remaining = totalBudget - totalSpent, percentage = Math.min((totalSpent / totalBudget) * 100, 100);
+            document.getElementById('totalSpent').textContent = formatNumber(totalSpent);
+            const remainingEl = document.getElementById('budgetRemaining');
+            remainingEl.textContent = remaining < 0 ? `-฿${formatNumber(Math.abs(remaining))}` : `฿${formatNumber(remaining)}`;
+            remainingEl.classList.toggle('over-budget', remaining < 0);
+            const progressBar = document.getElementById('budgetProgressBar');
+            progressBar.style.width = `${percentage}%`;
+            progressBar.classList.toggle('over-budget', percentage > 100);
+            document.getElementById('budgetPercent').textContent = `${Math.round(percentage)}% of budget`;
+            document.getElementById('daysRemaining').textContent = `${new Date(currentYear, currentMonth + 1, 0).getDate() - now.getDate()} days left`;
+            renderChart(currentChartType);
+            renderCategoryBreakdown(monthlyExpenses);
+            renderRecentExpenses();
+        }
+
+        function renderChart(type) {
+            currentChartType = type;
+            document.querySelectorAll('.chart-tab').forEach(tab => { tab.classList.toggle('active', tab.textContent.toLowerCase().includes(type === 'pie' ? 'categories' : type)); });
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (currentChart) currentChart.destroy();
+            const now = new Date(), currentMonth = now.getMonth(), currentYear = now.getFullYear();
+            const monthlyExpenses = expenses.filter(e => { const d = new Date(e.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
+
+            if (type === 'pie') {
+                const categoryTotals = {};
+                monthlyExpenses.forEach(e => { categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount; });
+                const sorted = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]).slice(0, 8);
+                currentChart = new Chart(ctx, { type: 'doughnut', data: { labels: sorted.map(([id]) => getCategoryName(id)), datasets: [{ data: sorted.map(([, amount]) => amount), backgroundColor: sorted.map(([id]) => getCategoryColor(id)), borderWidth: 0, spacing: 2 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: true, position: 'right', labels: { color: '#a0a0b0', font: { family: 'Outfit', size: 11 }, padding: 10, usePointStyle: true } } } } });
+            } else if (type === 'bar') {
+                const dailyTotals = {};
+                for (let i = 1; i <= new Date(currentYear, currentMonth + 1, 0).getDate(); i++) dailyTotals[i] = 0;
+                monthlyExpenses.forEach(e => { dailyTotals[new Date(e.date).getDate()] += e.amount; });
+                currentChart = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(dailyTotals), datasets: [{ data: Object.values(dailyTotals), backgroundColor: '#00e5cc', borderRadius: 4, barThickness: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#606070', maxTicksLimit: 10, font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#606070', callback: v => '฿' + formatNumber(v), font: { size: 10 } } } } } });
+            } else if (type === 'line') {
+                const monthlyTotals = [], labels = [];
+                for (let i = 5; i >= 0; i--) { const d = new Date(currentYear, currentMonth - i, 1); const total = expenses.filter(e => { const ed = new Date(e.date); return ed.getMonth() === d.getMonth() && ed.getFullYear() === d.getFullYear(); }).reduce((sum, e) => sum + e.amount, 0); monthlyTotals.push(total); labels.push(d.toLocaleDateString('en-US', { month: 'short' })); }
+                currentChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ data: monthlyTotals, borderColor: '#00e5cc', backgroundColor: 'rgba(0, 229, 204, 0.1)', fill: true, tension: 0.4, pointBackgroundColor: '#00e5cc', pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#606070' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#606070', callback: v => '฿' + formatNumber(v) } } } } });
+            }
+        }
+
+        function switchChart(type) { renderChart(type); }
+
+        function renderCategoryBreakdown(monthlyExpenses) {
+            const categoryTotals = {};
+            monthlyExpenses.forEach(e => { categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount; });
+            const totalSpent = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const sorted = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const container = document.getElementById('categoryList');
+            if (sorted.length === 0) { container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><h3>No expenses yet</h3><p>Add your first expense</p></div>`; return; }
+            container.innerHTML = sorted.map(([id, amount]) => { const cat = CATEGORIES.find(c => c.id === id), percent = totalSpent > 0 ? (amount / totalSpent * 100) : 0; return `<div class="category-item"><div class="category-icon" style="background: ${cat.color}20;">${cat.icon}</div><div class="category-info"><div class="category-name">${cat.name}</div><div class="category-bar"><div class="category-bar-fill" style="width: ${percent}%; background: ${cat.color};"></div></div></div><div><div class="category-amount">฿${formatNumber(amount)}</div><div class="category-percent">${percent.toFixed(1)}%</div></div></div>`; }).join('');
+        }
+
+        function renderRecentExpenses() {
+            const recent = [...expenses].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+            const container = document.getElementById('recentExpenses');
+            if (recent.length === 0) { container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><h3>No expenses yet</h3><p>Tap + to add your first expense</p></div>`; return; }
+            container.innerHTML = recent.map(e => { const cat = CATEGORIES.find(c => c.id === e.category), date = new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); return `<div class="expense-item" onclick="deleteExpense(${e.id})"><div class="expense-icon" style="background: ${cat.color}20;">${cat.icon}</div><div class="expense-info"><div class="expense-desc">${e.description}</div><div class="expense-meta">${date} • ${cat.name}</div></div><div class="expense-amount">฿${formatNumber(e.amount)}</div></div>`; }).join('');
+        }
+
+        function renderAllExpenses(filter = 'all') {
+            let filtered = [...expenses];
+            const now = new Date();
+            if (filter === 'today') filtered = filtered.filter(e => new Date(e.date).toDateString() === now.toDateString());
+            else if (filter === 'week') filtered = filtered.filter(e => new Date(e.date) >= new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
+            else if (filter === 'month') filtered = filtered.filter(e => { const d = new Date(e.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+            const container = document.getElementById('allExpenses');
+            if (filtered.length === 0) { container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h18v18H3z"/></svg><h3>No expenses found</h3><p>No expenses match the filter</p></div>`; return; }
+            container.innerHTML = filtered.map(e => { const cat = CATEGORIES.find(c => c.id === e.category), date = new Date(e.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); return `<div class="expense-item" onclick="deleteExpense(${e.id})"><div class="expense-icon" style="background: ${cat.color}20;">${cat.icon}</div><div class="expense-info"><div class="expense-desc">${e.description}</div><div class="expense-meta">${date} • ${cat.name}</div></div><div class="expense-amount">฿${formatNumber(e.amount)}</div></div>`; }).join('');
+        }
+
+        function filterExpenses(filter) { document.querySelectorAll('#expensesView .view-tab').forEach(tab => tab.classList.toggle('active', tab.textContent.toLowerCase().includes(filter))); renderAllExpenses(filter); }
+
+        function renderAllCategories() {
+            const now = new Date(), currentMonth = now.getMonth(), currentYear = now.getFullYear();
+            const monthlyExpenses = expenses.filter(e => { const d = new Date(e.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
+            const categoryTotals = {}; CATEGORIES.forEach(cat => { categoryTotals[cat.id] = 0; }); monthlyExpenses.forEach(e => { categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount; });
+            const totalSpent = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
+            document.getElementById('allCategories').innerHTML = CATEGORIES.map(cat => { const amount = categoryTotals[cat.id], budget = budgets[cat.id] || 0, percent = totalSpent > 0 ? (amount / totalSpent * 100) : 0, budgetPercent = budget > 0 ? (amount / budget * 100) : 0; return `<div class="category-item"><div class="category-icon" style="background: ${cat.color}20;">${cat.icon}</div><div class="category-info"><div class="category-name">${cat.name}</div><div class="category-bar"><div class="category-bar-fill" style="width: ${Math.min(budgetPercent, 100)}%; background: ${budgetPercent > 100 ? '#ef4444' : cat.color};"></div></div>${budget > 0 ? `<div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">Budget: ฿${formatNumber(budget)}</div>` : ''}</div><div><div class="category-amount">฿${formatNumber(amount)}</div><div class="category-percent">${percent.toFixed(1)}%</div></div></div>`; }).join('');
+        }
+
+        function saveBudget() {
+            settings.totalBudget = parseFloat(document.getElementById('totalBudgetInput').value) || 50000;
+            CATEGORIES.forEach(cat => { const input = document.getElementById(`budget_${cat.id}`); if (input && input.value) budgets[cat.id] = parseFloat(input.value) || 0; });
+            saveData(); closeModal('budgetModal'); showToast('Budget saved', 'success'); updateDashboard();
+        }
+
+        function toggleNotifications() { settings.notificationsEnabled = !settings.notificationsEnabled; document.getElementById('notificationToggle').classList.toggle('active', settings.notificationsEnabled); if (settings.notificationsEnabled) requestNotificationPermission(); saveData(); }
+        function saveSettings() { settings.notificationTime = document.getElementById('notificationTime').value; settings.googleApiKey = document.getElementById('googleApiKey').value; settings.userName = document.getElementById('userName').value; settings.partnerName = document.getElementById('partnerName').value; saveData(); showToast('Settings saved', 'success'); }
+        function requestNotificationPermission() { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); }
+
+        function exportData() {
+            const headers = ['Date', 'Description', 'Category', 'Amount (THB)', 'Original Amount', 'Currency', 'Input Type'];
+            const rows = expenses.map(e => [e.date, e.description, getCategoryName(e.category), e.amount, e.originalAmount, e.originalCurrency, e.inputType]);
+            const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' }), url = URL.createObjectURL(blob), a = document.createElement('a');
+            a.href = url; a.download = `family-expenses-${new Date().toISOString().split('T')[0]}.csv`; a.click(); URL.revokeObjectURL(url);
+            showToast('Data exported', 'success');
+        }
+
+        function clearAllData() { if (confirm('Delete ALL data? This cannot be undone.')) { if (confirm('Are you absolutely sure?')) { expenses = []; budgets = {}; localStorage.removeItem('familyExpenses'); localStorage.removeItem('familyBudgets'); saveData(); updateDashboard(); showToast('All data cleared', 'success'); } } }
+
+        function formatNumber(num) { return Math.round(num).toLocaleString('en-US'); }
+        function getCategoryName(id) { const cat = CATEGORIES.find(c => c.id === id); return cat ? cat.name : 'Other'; }
+        function getCategoryColor(id) { const cat = CATEGORIES.find(c => c.id === id); return cat ? cat.color : '#78716c'; }
+        function showToast(message, type = 'success') { const toast = document.getElementById('toast'); toast.textContent = message; toast.className = `toast ${type} show`; setTimeout(() => toast.classList.remove('show'), 3000); }
+
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+    </script>
+</body>
+</html>
