@@ -303,12 +303,13 @@
         .mt-4 { margin-top: 16px; }
         .mb-4 { margin-bottom: 16px; }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
     <div class="bg-gradient"></div>
     <header class="header">
         <div class="header-content">
-            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v2.5</span></div>
+            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v2.7</span></div>
             <div class="header-date" id="currentDate"></div>
         </div>
     </header>
@@ -581,10 +582,10 @@
                 <p>Tap to upload bank statement</p>
                 <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">Supports CSV files</p>
             </div>
-            <input type="file" id="statementInput" accept=".csv" style="display: none;" onchange="handleStatementUpload(event)">
+            <input type="file" id="statementInput" accept=".csv,.pdf" style="display: none;" onchange="handleStatementUpload(event)">
             <div id="statementPreview" class="hidden mt-4">
                 <div class="form-group"><label class="form-label">Detected Transactions</label><div id="statementTransactions" class="expense-list"></div></div>
-                <button class="submit-btn" onclick="importAllTransactions()">Import All</button>
+                <button class="submit-btn" onclick="importAllTransactions()">Import Selected</button>
             </div>
         </div>
     </div>
@@ -983,6 +984,9 @@
                 
                 const text = result.data.text;
                 console.log('OCR Result:', text);
+                
+                // DEBUG: Show what OCR detected
+                alert('OCR Result:\n\n' + text.substring(0, 800));
                 
                 // Parse multiple expenses from the text
                 detectedMultiExpenses = parseMultipleExpenses(text);
@@ -1420,27 +1424,228 @@
             closeModal('voiceModal'); updateDashboard();
         }
 
-        function handleStatementUpload(event) {
-            const file = event.target.files[0]; if (!file) return;
+        async function handleStatementUpload(event) {
+            const file = event.target.files[0]; 
+            if (!file) return;
+            
+            const isPDF = file.name.toLowerCase().endsWith('.pdf');
+            
+            if (isPDF) {
+                await handlePDFStatement(file);
+            } else {
+                handleCSVStatement(file);
+            }
+        }
+        
+        function handleCSVStatement(file) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const lines = e.target.result.split('\n'), transactions = [];
-                for (let i = 1; i < lines.length; i++) { const parts = lines[i].trim().split(','); if (parts.length >= 2) { const amount = parseFloat((parts[2] || parts[1]).replace(/[^\d.-]/g, '')); if (!isNaN(amount) && amount > 0) transactions.push({ date: parts[0] || new Date().toISOString().split('T')[0], description: parts[1] || 'Imported', amount: amount, category: guessCategory(parts[1]) || 'other' }); } }
+                for (let i = 1; i < lines.length; i++) { 
+                    const parts = lines[i].trim().split(','); 
+                    if (parts.length >= 2) { 
+                        const amount = parseFloat((parts[2] || parts[1]).replace(/[^\d.-]/g, '')); 
+                        if (!isNaN(amount) && amount > 0) 
+                            transactions.push({ 
+                                date: parts[0] || new Date().toISOString().split('T')[0], 
+                                description: parts[1] || 'Imported', 
+                                amount: amount, 
+                                category: guessCategory(parts[1]) || 'other',
+                                selected: true
+                            }); 
+                    } 
+                }
                 displayStatementTransactions(transactions);
             };
             reader.readAsText(file);
         }
+        
+        async function handlePDFStatement(file) {
+            try {
+                showToast('Processing PDF...', 'success');
+                
+                const arrayBuffer = await file.arrayBuffer();
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                
+                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                let fullText = '';
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                }
+                
+                console.log('PDF Text:', fullText);
+                
+                const transactions = parseBankStatement(fullText);
+                
+                if (transactions.length === 0) {
+                    alert('No transactions detected.\n\nExtracted text:\n' + fullText.substring(0, 500));
+                    return;
+                }
+                
+                displayStatementTransactions(transactions);
+                
+            } catch (error) {
+                console.error('PDF Error:', error);
+                showToast('Failed to read PDF: ' + error.message, 'error');
+            }
+        }
+        
+        function parseBankStatement(text) {
+            const transactions = [];
+            
+            // Common bank statement patterns
+            const patterns = [
+                // Date + Description + Amount (debit)
+                /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})\s+(.{5,50}?)\s+(\d{1,3}(?:,\d{3})*\.\d{2})\s*(?:DR|-)?\s*$/gm,
+                // Description + Date + Amount
+                /(.{5,50}?)\s+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})\s+(\d{1,3}(?:,\d{3})*\.\d{2})/g,
+                // Amount patterns with Thai Baht
+                /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})\s+(.+?)\s+฿?\s*(\d{1,3}(?:,\d{3})*\.\d{2})/g,
+            ];
+            
+            // Try each pattern
+            for (const pattern of patterns) {
+                let match;
+                while ((match = pattern.exec(text)) !== null) {
+                    let date, description, amount;
+                    
+                    // Determine which group is which based on pattern
+                    if (/^\d/.test(match[1])) {
+                        date = match[1];
+                        description = match[2];
+                        amount = parseFloat(match[3].replace(/,/g, ''));
+                    } else {
+                        description = match[1];
+                        date = match[2];
+                        amount = parseFloat(match[3].replace(/,/g, ''));
+                    }
+                    
+                    if (amount > 0 && amount < 1000000 && description.length > 2) {
+                        transactions.push({
+                            date: formatDate(date),
+                            description: description.trim().substring(0, 50),
+                            amount: amount,
+                            category: guessCategory(description) || 'other',
+                            selected: true
+                        });
+                    }
+                }
+                
+                if (transactions.length > 0) break;
+            }
+            
+            // Remove duplicates
+            const unique = [];
+            for (const t of transactions) {
+                const isDupe = unique.some(u => 
+                    Math.abs(u.amount - t.amount) < 0.01 && 
+                    u.description === t.description &&
+                    u.date === t.date
+                );
+                if (!isDupe) unique.push(t);
+            }
+            
+            return unique;
+        }
+        
+        function formatDate(dateStr) {
+            try {
+                const parts = dateStr.split(/[\/\-]/);
+                if (parts.length === 3) {
+                    let year = parts[2];
+                    if (year.length === 2) year = '20' + year;
+                    return `${year}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                }
+            } catch (e) {}
+            return new Date().toISOString().split('T')[0];
+        }
 
         function displayStatementTransactions(transactions) {
             window.pendingTransactions = transactions;
-            document.getElementById('statementTransactions').innerHTML = transactions.map((t, i) => { const cat = CATEGORIES.find(c => c.id === t.category); return `<div class="expense-item"><div class="expense-icon" style="background: ${cat.color}20;">${cat.icon}</div><div class="expense-info"><div class="expense-desc">${t.description}</div><div class="expense-meta">${t.date}</div></div><div class="expense-amount">฿${formatNumber(t.amount)}</div></div>`; }).join('');
+            const html = transactions.map((t, i) => {
+                const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES.find(c => c.id === 'other');
+                return `
+                <div class="expense-item" style="flex-wrap: wrap; gap: 8px;">
+                    <input type="checkbox" ${t.selected ? 'checked' : ''} 
+                        onchange="toggleTransaction(${i})" 
+                        style="width: 20px; height: 20px;">
+                    <div class="expense-icon" style="background: ${cat.color}20;">${cat.icon}</div>
+                    <div class="expense-info" style="flex: 1; min-width: 150px;">
+                        <div class="expense-desc">${t.description}</div>
+                        <div class="expense-meta">${t.date}</div>
+                    </div>
+                    <div class="expense-amount">฿${formatNumber(t.amount)}</div>
+                    <select onchange="updateTransactionCategory(${i}, this.value)" 
+                        style="width: 100%; margin-top: 8px; padding: 8px; border-radius: 8px; background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--border-color);">
+                        ${CATEGORIES.map(c => `<option value="${c.id}" ${c.id === t.category ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
+                    </select>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('statementTransactions').innerHTML = html;
             document.getElementById('statementPreview').classList.remove('hidden');
+            
+            updateSelectedCount();
+        }
+        
+        function toggleTransaction(index) {
+            window.pendingTransactions[index].selected = !window.pendingTransactions[index].selected;
+            updateSelectedCount();
+        }
+        
+        function updateTransactionCategory(index, category) {
+            window.pendingTransactions[index].category = category;
+        }
+        
+        function updateSelectedCount() {
+            const selected = window.pendingTransactions.filter(t => t.selected).length;
+            const total = window.pendingTransactions.length;
+            const btn = document.querySelector('#statementPreview .submit-btn');
+            if (btn) btn.textContent = `Import Selected (${selected}/${total})`;
         }
 
         function importAllTransactions() {
-            if (!window.pendingTransactions || window.pendingTransactions.length === 0) { showToast('No transactions', 'error'); return; }
-            window.pendingTransactions.forEach(t => { expenses.push({ id: Date.now() + Math.random(), amount: t.amount, originalAmount: t.amount, originalCurrency: 'THB', description: t.description, category: t.category, date: t.date, inputType: 'statement', createdAt: new Date().toISOString() }); });
-            saveData(); closeModal('uploadModal'); showToast(`Imported ${window.pendingTransactions.length} transactions`, 'success'); window.pendingTransactions = []; updateDashboard();
+            if (!window.pendingTransactions || window.pendingTransactions.length === 0) { 
+                showToast('No transactions', 'error'); 
+                return; 
+            }
+            
+            const selected = window.pendingTransactions.filter(t => t.selected);
+            if (selected.length === 0) {
+                showToast('No transactions selected', 'error');
+                return;
+            }
+            
+            selected.forEach(t => { 
+                const expense = { 
+                    id: Date.now() + Math.random(), 
+                    amount: t.amount, 
+                    originalAmount: t.amount, 
+                    originalCurrency: 'THB', 
+                    description: t.description, 
+                    category: t.category, 
+                    date: t.date, 
+                    inputType: 'statement',
+                    addedBy: settings.userName || 'Unknown',
+                    createdAt: new Date().toISOString() 
+                };
+                
+                if (database) {
+                    addExpenseToFirebase(expense);
+                } else {
+                    expenses.push(expense);
+                }
+            });
+            
+            if (!database) saveData();
+            closeModal('uploadModal'); 
+            showToast(`Imported ${selected.length} transactions`, 'success'); 
+            window.pendingTransactions = []; 
+            updateDashboard();
         }
 
         function updateDashboard() {
