@@ -309,7 +309,7 @@
     <div class="bg-gradient"></div>
     <header class="header">
         <div class="header-content">
-            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v3.1</span></div>
+            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v3.2</span></div>
             <div class="header-date" id="currentDate"></div>
         </div>
     </header>
@@ -1418,8 +1418,30 @@
         }
 
         function extractAmount(text) {
-            const patterns = [/(?:฿|THB|baht|บาท)\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/gi, /(\d+(?:,\d{3})*(?:\.\d{2})?)\s*(?:฿|THB|baht|บาท)/gi, /(?:total|รวม|ยอด|amount|net)\s*:?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/gi];
-            for (const pattern of patterns) { const match = pattern.exec(text); if (match) { const num = parseFloat(match[1].replace(/,/g, '')); if (num > 0 && num < 1000000) return num; } } return null;
+            // For payment slips, prioritize "Amount: XXX Baht" pattern
+            const amountPattern = /Amount:\s*[\n\r\s]*[-\s]*(\d+(?:,\d{3})*(?:\.\d{2})?)\s*Baht/i;
+            const amountMatch = amountPattern.exec(text);
+            if (amountMatch) {
+                const num = parseFloat(amountMatch[1].replace(/,/g, ''));
+                if (num > 0 && num < 1000000) return num;
+            }
+            
+            // Thai and general patterns
+            const patterns = [
+                /(?:฿|THB|baht|บาท)\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/gi, 
+                /(\d+(?:,\d{3})*(?:\.\d{2})?)\s*(?:฿|THB|baht|บาท)/gi, 
+                /(?:total|รวม|ยอด|amount|net)\s*:?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/gi
+            ];
+            
+            // Try each pattern and return first valid amount > 0
+            for (const pattern of patterns) { 
+                const match = pattern.exec(text); 
+                if (match) { 
+                    const num = parseFloat(match[1].replace(/,/g, '')); 
+                    if (num > 0 && num < 1000000) return num; 
+                } 
+            } 
+            return null;
         }
 
         function guessCategory(text) {
