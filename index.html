@@ -309,7 +309,7 @@
     <div class="bg-gradient"></div>
     <header class="header">
         <div class="header-content">
-            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v3.0</span></div>
+            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v3.1</span></div>
             <div class="header-date" id="currentDate"></div>
         </div>
     </header>
@@ -914,6 +914,13 @@
                 document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
                 document.querySelectorAll('#categoryGrid .category-option').forEach(el => el.classList.remove('selected'));
             }
+            if (modalId === 'cameraModal') {
+                clearOCRForm();
+                clearCameraPreview();
+            }
+            if (modalId === 'voiceModal') {
+                clearVoiceForm();
+            }
             if (modalId === 'categoryModal') {
                 renderCategoryLists();
             }
@@ -955,6 +962,42 @@
             return duplicates;
         }
 
+        function clearExpenseForm() {
+            // Clear manual entry form
+            document.getElementById('amountInput').value = '';
+            document.getElementById('descriptionInput').value = '';
+            document.getElementById('currencySelect').value = 'THB';
+            document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+            selectedCategory = null;
+            // Remove selection from category grid
+            document.querySelectorAll('#categoryGrid .category-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+        }
+        
+        function clearOCRForm() {
+            document.getElementById('ocrAmountInput').value = '';
+            document.getElementById('ocrDescriptionInput').value = '';
+            document.getElementById('ocrCurrencySelect').value = 'THB';
+            document.getElementById('ocrOriginalText').value = '';
+            document.getElementById('ocrTranslatedText').value = '';
+            selectedCategory = null;
+            document.querySelectorAll('#ocrCategoryGrid .category-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+        }
+        
+        function clearVoiceForm() {
+            document.getElementById('voiceAmountInput').value = '';
+            document.getElementById('voiceDescriptionInput').value = '';
+            document.getElementById('voiceCurrencySelect').value = 'THB';
+            document.getElementById('voiceTranscript').textContent = 'Say: "I spent 500 baht on groceries"';
+            selectedCategory = null;
+            document.querySelectorAll('#voiceCategoryGrid .category-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+        }
+
         function addExpense() {
             const amount = parseFloat(document.getElementById('amountInput').value), currency = document.getElementById('currencySelect').value, description = document.getElementById('descriptionInput').value.trim(), date = document.getElementById('dateInput').value;
             if (!amount || amount <= 0) { showToast('Please enter a valid amount', 'error'); return; }
@@ -980,7 +1023,9 @@
                 saveData();
                 showToast('Expense added (local)', 'success');
             }
-            closeModal('textModal'); updateDashboard();
+            clearExpenseForm(); // Clear form after adding
+            closeModal('textModal'); 
+            updateDashboard();
         }
 
         let currentEditingExpenseId = null;
@@ -1408,7 +1453,10 @@
                 saveData();
                 showToast('Expense added from receipt', 'success');
             }
-            closeModal('cameraModal'); updateDashboard();
+            clearOCRForm(); // Clear form after adding
+            clearCameraPreview(); // Also clear the camera preview
+            closeModal('cameraModal'); 
+            updateDashboard();
         }
 
         function initializeSpeechRecognition() {
@@ -1604,7 +1652,9 @@
                 saveData();
                 showToast('Expense added from voice', 'success');
             }
-            closeModal('voiceModal'); updateDashboard();
+            clearVoiceForm(); // Clear form after adding
+            closeModal('voiceModal'); 
+            updateDashboard();
         }
 
         async function handleStatementUpload(event) {
