@@ -425,6 +425,78 @@
             box-shadow: 0 4px 20px rgba(0, 229, 204, 0.3); z-index: 100;
             display: flex; align-items: center; justify-content: center;
         }
+        
+        /* Quick Actions at Top */
+        .quick-actions-top {
+            display: flex; gap: 12px; margin-bottom: 16px;
+        }
+        .action-btn-top {
+            flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;
+            padding: 16px 12px; background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; color: var(--text-primary); cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .action-btn-top:hover { background: var(--bg-elevated); transform: translateY(-2px); }
+        .action-btn-top svg { width: 28px; height: 28px; color: var(--accent-cyan); }
+        .action-btn-top span { font-size: 0.8rem; font-weight: 500; }
+        
+        /* Pie Chart Total */
+        .pie-total {
+            text-align: center; font-size: 1.5rem; font-weight: 700;
+            color: var(--text-primary); margin-top: -10px;
+        }
+        
+        /* Simple Bottom Nav */
+        .nav-items-simple {
+            display: flex; justify-content: space-around; align-items: center;
+            max-width: 400px; margin: 0 auto; position: relative;
+        }
+        .nav-item-simple {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            background: none; border: none; color: var(--text-muted);
+            padding: 8px 20px; cursor: pointer; transition: color 0.2s;
+        }
+        .nav-item-simple.active { color: var(--accent-cyan); }
+        .nav-item-simple span { font-size: 0.7rem; font-weight: 500; }
+        
+        /* Big Add Button */
+        .add-btn-container { position: relative; }
+        .big-add-btn {
+            width: 64px; height: 64px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border: none; color: white; cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 229, 204, 0.4);
+            display: flex; align-items: center; justify-content: center;
+            margin-top: -20px; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .big-add-btn:hover { transform: scale(1.05); box-shadow: 0 6px 25px rgba(0, 229, 204, 0.5); }
+        .big-add-btn.active { transform: rotate(45deg); }
+        
+        /* Add Menu Popup */
+        .add-menu {
+            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 8px; min-width: 160px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        }
+        .add-menu.active { opacity: 1; visibility: visible; }
+        .add-menu-item {
+            display: flex; align-items: center; gap: 12px;
+            width: 100%; padding: 14px 16px; background: none; border: none;
+            color: var(--text-primary); cursor: pointer; border-radius: 12px;
+            transition: background 0.2s;
+        }
+        .add-menu-item:hover { background: var(--bg-elevated); }
+        .add-menu-item svg { color: var(--accent-cyan); }
+        .add-menu-item span { font-weight: 500; }
+        
+        .add-menu-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3); z-index: 98;
+            opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .add-menu-overlay.active { opacity: 1; visibility: visible; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
@@ -437,7 +509,7 @@
                     <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
                 </svg>
             </button>
-            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v4.1</span></div>
+            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v4.2</span></div>
             <div class="header-date" id="currentDate"></div>
         </div>
     </header>
@@ -486,36 +558,43 @@
         </div>
         
         <div id="dashboardView">
-            <!-- Overview Header -->
-            <div class="overview-card">
-                <div class="overview-card-header">
-                    <div class="overview-card-title">📊 FINANCIAL OVERVIEW</div>
-                    <div class="overview-card-title" id="overviewMonth">November 2025</div>
-                </div>
+            <!-- Quick Actions at TOP -->
+            <div class="quick-actions-top">
+                <button class="action-btn-top" onclick="openModal('cameraModal')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <span>Photo</span>
+                </button>
+                <button class="action-btn-top" onclick="openModal('voiceModal')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    <span>Voice</span>
+                </button>
+                <button class="action-btn-top" onclick="openModal('textModal')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    <span>Manual</span>
+                </button>
             </div>
             
-            <!-- Spending Progress -->
+            <!-- Monthly Spending Pie Chart -->
             <div class="overview-card">
-                <div class="spending-bar-container">
-                    <div class="spending-bar-label">
-                        <span>Today's Spending</span>
-                        <span><strong id="todaySpent">฿0</strong> of ฿<span id="dailyBudgetDisplay">3,000</span></span>
-                    </div>
-                    <div class="spending-bar"><div class="spending-bar-fill green" id="todayBar" style="width: 0%"></div></div>
+                <div class="overview-card-header">
+                    <div class="overview-card-title">📊 Monthly Spending</div>
+                    <div class="overview-card-title" id="overviewMonth">November 2025</div>
                 </div>
-                <div class="spending-bar-container">
-                    <div class="spending-bar-label">
-                        <span>This Week</span>
-                        <span><strong id="weekSpent">฿0</strong> of ฿<span id="weeklyBudgetDisplay">21,000</span></span>
-                    </div>
-                    <div class="spending-bar"><div class="spending-bar-fill green" id="weekBar" style="width: 0%"></div></div>
+                <div class="chart-wrapper" style="height: 250px; position: relative;">
+                    <canvas id="monthlyPieChart"></canvas>
                 </div>
-                <div class="spending-bar-container">
-                    <div class="spending-bar-label">
-                        <span>This Month</span>
-                        <span><strong id="monthSpent">฿0</strong> of ฿<span id="monthlyBudgetDisplay">50,000</span></span>
-                    </div>
-                    <div class="spending-bar"><div class="spending-bar-fill green" id="monthBar" style="width: 0%"></div></div>
+                <div class="pie-total" id="pieTotalAmount">฿0</div>
+            </div>
+            
+            <!-- Income vs Expenses Projection Graph -->
+            <div class="overview-card">
+                <div class="overview-card-title" style="margin-bottom: 16px;">📈 6-Month Projection</div>
+                <div class="chart-wrapper" style="height: 220px;">
+                    <canvas id="projectionLineChart"></canvas>
+                </div>
+                <div style="display: flex; justify-content: center; gap: 20px; margin-top: 12px; font-size: 0.8rem;">
+                    <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; background: var(--accent-green); border-radius: 2px;"></span> Income</span>
+                    <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; background: var(--accent-red); border-radius: 2px;"></span> Expenses</span>
                 </div>
             </div>
             
@@ -538,46 +617,10 @@
                     <span class="cash-flow-label">Recurring Paid</span>
                     <span class="cash-flow-value expense" id="recurringPaid">-฿0</span>
                 </div>
-                <div class="cash-flow-row">
-                    <span class="cash-flow-label">Recurring Upcoming</span>
-                    <span class="cash-flow-value" style="color: var(--text-muted);" id="recurringUpcoming">฿0</span>
-                </div>
                 <div class="cash-flow-row" style="border-top: 2px solid var(--border); padding-top: 12px; margin-top: 8px;">
                     <span class="cash-flow-label" style="font-weight: 600;">Net Cash Flow</span>
                     <span class="cash-flow-value" id="netCashFlow" style="font-size: 1.25rem;">฿0</span>
                 </div>
-            </div>
-            
-            <!-- 3-Month Projection -->
-            <div class="overview-card">
-                <div class="overview-card-title" style="margin-bottom: 16px;">📅 3-MONTH PROJECTION</div>
-                <div class="projection-grid" id="projectionGrid">
-                    <!-- Filled by JS -->
-                </div>
-                <div style="display: flex; gap: 8px; margin-top: 16px;">
-                    <button class="chart-tab" onclick="updateProjection(6)" style="flex:1;">6 Months</button>
-                    <button class="chart-tab" onclick="updateProjection(12)" style="flex:1;">12 Months</button>
-                </div>
-            </div>
-            
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <button class="action-btn" onclick="openModal('textModal')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    <span>Manual</span>
-                </button>
-                <button class="action-btn camera" onclick="openModal('cameraModal')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                    <span>Camera</span>
-                </button>
-                <button class="action-btn voice" onclick="openModal('voiceModal')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                    <span>Voice</span>
-                </button>
-                <button class="action-btn upload" onclick="openModal('uploadModal')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    <span>Upload</span>
-                </button>
             </div>
             
             <!-- Recent Expenses -->
@@ -699,24 +742,37 @@
         </div>
     </main>
     <nav class="bottom-nav">
-        <div class="nav-items">
-            <button class="nav-item active" id="navDashboard" onclick="showView('dashboard')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <div class="nav-items-simple">
+            <button class="nav-item-simple active" id="navDashboard" onclick="showView('dashboard')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 <span>Overview</span>
             </button>
-            <button class="nav-item" id="navExpenses" onclick="showView('expenses')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            <button class="nav-item-simple" id="navExpenses" onclick="showView('expenses')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                 <span>Expenses</span>
             </button>
-            <button class="nav-item add-btn" onclick="openModal('textModal')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
-            <button class="nav-item" id="navCategories" onclick="showView('categories')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M12 2v20"/><path d="M2 12h20"/></svg>
-                <span>Categories</span>
-            </button>
+            <div class="add-btn-container">
+                <button class="big-add-btn" onclick="toggleAddMenu()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="32" height="32"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="add-menu" id="addMenu">
+                    <button class="add-menu-item" onclick="openModal('cameraModal'); toggleAddMenu();">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        <span>Photo</span>
+                    </button>
+                    <button class="add-menu-item" onclick="openModal('voiceModal'); toggleAddMenu();">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                        <span>Voice</span>
+                    </button>
+                    <button class="add-menu-item" onclick="openModal('textModal'); toggleAddMenu();">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        <span>Manual</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </nav>
+    <div class="add-menu-overlay" id="addMenuOverlay" onclick="toggleAddMenu()"></div>
 
     <!-- Text Input Modal -->
     <div class="modal-overlay" id="textModal">
@@ -1402,6 +1458,15 @@
         function toggleSideMenu() {
             document.getElementById('sideMenu').classList.toggle('active');
             document.getElementById('sideMenuOverlay').classList.toggle('active');
+        }
+        
+        function toggleAddMenu() {
+            const menu = document.getElementById('addMenu');
+            const overlay = document.getElementById('addMenuOverlay');
+            const btn = document.querySelector('.big-add-btn');
+            menu.classList.toggle('active');
+            overlay.classList.toggle('active');
+            btn.classList.toggle('active');
         }
 
         function openModal(modalId) {
@@ -2518,65 +2583,241 @@
             updateDashboard();
         }
 
+        // Chart variables
+        let monthlyPieChart = null, projectionLineChart = null;
+
         function updateDashboard() {
-            const now = new Date(), currentMonth = now.getMonth(), currentYear = now.getFullYear();
-            const monthlyExpenses = expenses.filter(e => { const d = new Date(e.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
-            const totalSpent = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0), totalBudget = settings.totalBudget || 50000, remaining = totalBudget - totalSpent, percentage = Math.min((totalSpent / totalBudget) * 100, 100);
-            document.getElementById('totalSpent').textContent = formatNumber(totalSpent);
-            const remainingEl = document.getElementById('budgetRemaining');
-            remainingEl.textContent = remaining < 0 ? `-฿${formatNumber(Math.abs(remaining))}` : `฿${formatNumber(remaining)}`;
-            remainingEl.classList.toggle('over-budget', remaining < 0);
-            const progressBar = document.getElementById('budgetProgressBar');
-            progressBar.style.width = `${percentage}%`;
-            progressBar.classList.toggle('over-budget', percentage > 100);
-            document.getElementById('budgetPercent').textContent = `${Math.round(percentage)}% of budget`;
-            document.getElementById('daysRemaining').textContent = `${new Date(currentYear, currentMonth + 1, 0).getDate() - now.getDate()} days left`;
-            renderChart(currentChartType);
-            renderCategoryBreakdown(monthlyExpenses);
+            const now = new Date();
+            const currentMonth = now.getMonth(), currentYear = now.getFullYear();
+            
+            // Update month display
+            document.getElementById('overviewMonth').textContent = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            // Get monthly expenses
+            const monthExpenses = expenses.filter(e => { const d = new Date(e.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
+            const monthTotal = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+            
+            // Calculate income for this month
+            const monthIncome = income.filter(i => { const d = new Date(i.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
+            const receivedIncome = monthIncome.filter(i => i.status === 'received').reduce((sum, i) => sum + i.amount, 0);
+            const expectedIncome = monthIncome.filter(i => i.status === 'expected').reduce((sum, i) => sum + i.amount, 0);
+            
+            // Calculate recurring - including prorated quarterly/yearly
+            const recurringPaidThisMonth = monthExpenses.filter(e => e.inputType === 'recurring').reduce((sum, e) => sum + e.amount, 0);
+            const dailySpending = monthTotal - recurringPaidThisMonth;
+            
+            // Update cash flow display
+            document.getElementById('incomeReceived').textContent = `฿${formatNumber(receivedIncome)}`;
+            document.getElementById('incomeExpected').textContent = `฿${formatNumber(expectedIncome)}`;
+            document.getElementById('dailySpendingTotal').textContent = `-฿${formatNumber(dailySpending)}`;
+            document.getElementById('recurringPaid').textContent = `-฿${formatNumber(recurringPaidThisMonth)}`;
+            
+            const netCashFlow = receivedIncome - monthTotal;
+            const netEl = document.getElementById('netCashFlow');
+            netEl.textContent = `${netCashFlow >= 0 ? '+' : ''}฿${formatNumber(netCashFlow)}`;
+            netEl.className = 'cash-flow-value ' + (netCashFlow >= 0 ? 'income' : 'expense');
+            
+            // Render pie chart
+            renderMonthlyPieChart(monthExpenses);
+            
+            // Render projection line chart
+            renderProjectionLineChart();
+            
+            // Update pie total
+            document.getElementById('pieTotalAmount').textContent = `฿${formatNumber(monthTotal)} total`;
+            
+            // Render recent expenses
             renderRecentExpenses();
         }
-
-        function renderChart(type) {
-            currentChartType = type;
-            document.querySelectorAll('.chart-tab').forEach(tab => { tab.classList.toggle('active', tab.textContent.toLowerCase().includes(type === 'pie' ? 'categories' : type)); });
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            if (currentChart) currentChart.destroy();
-            const now = new Date(), currentMonth = now.getMonth(), currentYear = now.getFullYear();
-            const monthlyExpenses = expenses.filter(e => { const d = new Date(e.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
-
-            if (type === 'pie') {
-                const categoryTotals = {};
-                monthlyExpenses.forEach(e => { categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount; });
-                const sorted = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]).slice(0, 8);
-                currentChart = new Chart(ctx, { type: 'doughnut', data: { labels: sorted.map(([id]) => getCategoryName(id)), datasets: [{ data: sorted.map(([, amount]) => amount), backgroundColor: sorted.map(([id]) => getCategoryColor(id)), borderWidth: 0, spacing: 2 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: true, position: 'right', labels: { color: '#a0a0b0', font: { family: 'Outfit', size: 11 }, padding: 10, usePointStyle: true } } } } });
-            } else if (type === 'bar') {
-                const dailyTotals = {};
-                for (let i = 1; i <= new Date(currentYear, currentMonth + 1, 0).getDate(); i++) dailyTotals[i] = 0;
-                monthlyExpenses.forEach(e => { dailyTotals[new Date(e.date).getDate()] += e.amount; });
-                currentChart = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(dailyTotals), datasets: [{ data: Object.values(dailyTotals), backgroundColor: '#00e5cc', borderRadius: 4, barThickness: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#606070', maxTicksLimit: 10, font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#606070', callback: v => '฿' + formatNumber(v), font: { size: 10 } } } } } });
-            } else if (type === 'line') {
-                const monthlyTotals = [], labels = [];
-                for (let i = 5; i >= 0; i--) { const d = new Date(currentYear, currentMonth - i, 1); const total = expenses.filter(e => { const ed = new Date(e.date); return ed.getMonth() === d.getMonth() && ed.getFullYear() === d.getFullYear(); }).reduce((sum, e) => sum + e.amount, 0); monthlyTotals.push(total); labels.push(d.toLocaleDateString('en-US', { month: 'short' })); }
-                currentChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ data: monthlyTotals, borderColor: '#00e5cc', backgroundColor: 'rgba(0, 229, 204, 0.1)', fill: true, tension: 0.4, pointBackgroundColor: '#00e5cc', pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#606070' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#606070', callback: v => '฿' + formatNumber(v) } } } } });
-            }
-        }
-
-        function switchChart(type) { renderChart(type); }
-
-        function renderCategoryBreakdown(monthlyExpenses) {
+        
+        function renderMonthlyPieChart(monthExpenses) {
+            const ctx = document.getElementById('monthlyPieChart');
+            if (!ctx) return;
+            
+            if (monthlyPieChart) monthlyPieChart.destroy();
+            
+            // Calculate category totals from daily spending
             const categoryTotals = {};
-            monthlyExpenses.forEach(e => { categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount; });
-            const totalSpent = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
-            const sorted = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
-            const container = document.getElementById('categoryList');
-            if (sorted.length === 0) {
-                container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><h3>No expenses yet</h3><p>Add your first expense</p></div>`;
+            monthExpenses.forEach(e => {
+                if (e.inputType !== 'recurring') {
+                    categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount;
+                }
+            });
+            
+            // Add prorated recurring expenses
+            recurring.forEach(r => {
+                let monthlyAmount = r.amount;
+                switch(r.frequency) {
+                    case 'weekly': monthlyAmount = r.amount * 4.33; break;
+                    case 'monthly': monthlyAmount = r.amount; break;
+                    case 'quarterly': monthlyAmount = r.amount / 3; break;
+                    case 'semester': monthlyAmount = r.amount / 6; break;
+                    case 'yearly': monthlyAmount = r.amount / 12; break;
+                }
+                const cat = 'recurring_' + r.name.toLowerCase().replace(/\s+/g, '_');
+                categoryTotals[cat] = monthlyAmount;
+            });
+            
+            if (Object.keys(categoryTotals).length === 0) {
+                // Show empty state
+                ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
                 return;
             }
-            container.innerHTML = sorted.map(([id, amount]) => {
-                const cat = CATEGORIES.find(c => c.id === id), percent = totalSpent > 0 ? (amount / totalSpent * 100) : 0;
-                return `<div class="category-item"><div class="category-icon" style="background: ${cat.color}20;">${cat.icon}</div><div class="category-info"><div class="category-name">${cat.name}</div><div class="category-bar"><div class="category-bar-fill" style="width: ${percent}%; background: ${cat.color};"></div></div></div><div><div class="category-amount">฿${formatNumber(amount)}</div><div class="category-percent">${percent.toFixed(1)}%</div></div></div>`;
-            }).join('');
+            
+            const sorted = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const colors = ['#00e5cc', '#a855f7', '#ec4899', '#22c55e', '#f97316', '#3b82f6', '#eab308', '#ef4444', '#6366f1', '#14b8a6'];
+            
+            monthlyPieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: sorted.map(([id]) => {
+                        if (id.startsWith('recurring_')) {
+                            return id.replace('recurring_', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' (recurring)';
+                        }
+                        return getCategoryName(id);
+                    }),
+                    datasets: [{
+                        data: sorted.map(([, amount]) => Math.round(amount)),
+                        backgroundColor: sorted.map(([id], i) => {
+                            if (id.startsWith('recurring_')) return colors[i % colors.length];
+                            return getCategoryColor(id);
+                        }),
+                        borderWidth: 0,
+                        spacing: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                color: '#a0a0b0',
+                                font: { family: 'Outfit', size: 10 },
+                                padding: 8,
+                                usePointStyle: true,
+                                boxWidth: 8
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `฿${formatNumber(context.raw)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderProjectionLineChart() {
+            const ctx = document.getElementById('projectionLineChart');
+            if (!ctx) return;
+            
+            if (projectionLineChart) projectionLineChart.destroy();
+            
+            const now = new Date();
+            const months = 6;
+            const labels = [], incomeData = [], expenseData = [];
+            
+            for (let i = 0; i < months; i++) {
+                const futureDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
+                labels.push(futureDate.toLocaleDateString('en-US', { month: 'short' }));
+                
+                // Expected income for this month
+                const monthIncome = income.filter(inc => {
+                    const d = new Date(inc.date);
+                    return d.getMonth() === futureDate.getMonth() && d.getFullYear() === futureDate.getFullYear();
+                }).reduce((sum, inc) => sum + inc.amount, 0);
+                incomeData.push(monthIncome);
+                
+                // Recurring expenses (prorated)
+                let monthRecurring = 0;
+                recurring.forEach(r => {
+                    let monthlyAmount = r.amount;
+                    switch(r.frequency) {
+                        case 'weekly': monthlyAmount = r.amount * 4.33; break;
+                        case 'monthly': monthlyAmount = r.amount; break;
+                        case 'quarterly': monthlyAmount = r.amount / 3; break;
+                        case 'semester': monthlyAmount = r.amount / 6; break;
+                        case 'yearly': monthlyAmount = r.amount / 12; break;
+                    }
+                    monthRecurring += monthlyAmount;
+                });
+                
+                // Planned one-time expenses (NOT prorated - full amount in their month)
+                const monthPlanned = plannedExpenses.filter(p => {
+                    const d = new Date(p.date);
+                    return d.getMonth() === futureDate.getMonth() && d.getFullYear() === futureDate.getFullYear();
+                }).reduce((sum, p) => sum + p.amount, 0);
+                
+                // Estimated daily spending
+                const estimatedDaily = settings.monthlySpendingEstimate || 50000;
+                
+                expenseData.push(monthRecurring + monthPlanned + estimatedDaily);
+            }
+            
+            projectionLineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Income',
+                            data: incomeData,
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointBackgroundColor: '#22c55e',
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Expenses',
+                            data: expenseData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointBackgroundColor: '#ef4444',
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ฿' + formatNumber(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#606070', font: { size: 11 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: {
+                                color: '#606070',
+                                font: { size: 10 },
+                                callback: v => '฿' + formatCompact(v)
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         function renderRecentExpenses() {
@@ -3261,164 +3502,14 @@
         }
 
         // ============================================
-        // OVERVIEW & PROJECTIONS
+        // UTILITIES
         // ============================================
-        function updateDashboard() {
-            const now = new Date();
-            const currentMonth = now.getMonth(), currentYear = now.getFullYear();
-            
-            // Update month display
-            document.getElementById('overviewMonth').textContent = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            
-            // Calculate spending
-            const todayStr = now.toISOString().split('T')[0];
-            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            
-            const todayExpenses = expenses.filter(e => e.date === todayStr);
-            const weekExpenses = expenses.filter(e => new Date(e.date) >= weekAgo);
-            const monthExpenses = expenses.filter(e => { const d = new Date(e.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
-            
-            const todayTotal = todayExpenses.reduce((sum, e) => sum + e.amount, 0);
-            const weekTotal = weekExpenses.reduce((sum, e) => sum + e.amount, 0);
-            const monthTotal = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
-            
-            // Update spending bars
-            updateSpendingBar('todaySpent', 'todayBar', todayTotal, settings.dailyBudget || 3000);
-            updateSpendingBar('weekSpent', 'weekBar', weekTotal, settings.weeklyBudget || 21000);
-            updateSpendingBar('monthSpent', 'monthBar', monthTotal, settings.monthlySpendingEstimate || 50000);
-            
-            document.getElementById('dailyBudgetDisplay').textContent = formatNumber(settings.dailyBudget || 3000);
-            document.getElementById('weeklyBudgetDisplay').textContent = formatNumber(settings.weeklyBudget || 21000);
-            document.getElementById('monthlyBudgetDisplay').textContent = formatNumber(settings.monthlySpendingEstimate || 50000);
-            
-            // Calculate income for this month
-            const monthIncome = income.filter(i => { const d = new Date(i.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
-            const receivedIncome = monthIncome.filter(i => i.status === 'received').reduce((sum, i) => sum + i.amount, 0);
-            const expectedIncome = monthIncome.filter(i => i.status === 'expected').reduce((sum, i) => sum + i.amount, 0);
-            
-            // Calculate recurring
-            const recurringPaidThisMonth = monthExpenses.filter(e => e.inputType === 'recurring').reduce((sum, e) => sum + e.amount, 0);
-            const dailySpending = monthTotal - recurringPaidThisMonth;
-            
-            // Upcoming recurring this month
-            const recurringUpcoming = recurring.filter(r => {
-                const d = new Date(r.nextDueDate);
-                return d.getMonth() === currentMonth && d.getFullYear() === currentYear && d >= now;
-            }).reduce((sum, r) => sum + r.amount, 0);
-            
-            // Update cash flow display
-            document.getElementById('incomeReceived').textContent = `฿${formatNumber(receivedIncome)}`;
-            document.getElementById('incomeExpected').textContent = `฿${formatNumber(expectedIncome)}`;
-            document.getElementById('dailySpendingTotal').textContent = `-฿${formatNumber(dailySpending)}`;
-            document.getElementById('recurringPaid').textContent = `-฿${formatNumber(recurringPaidThisMonth)}`;
-            document.getElementById('recurringUpcoming').textContent = `฿${formatNumber(recurringUpcoming)}`;
-            
-            const netCashFlow = receivedIncome - monthTotal;
-            const netEl = document.getElementById('netCashFlow');
-            netEl.textContent = `${netCashFlow >= 0 ? '+' : ''}฿${formatNumber(netCashFlow)}`;
-            netEl.className = 'cash-flow-value ' + (netCashFlow >= 0 ? 'income' : 'expense');
-            
-            // Update projection
-            updateProjection(3);
-            
-            // Render recent expenses
-            renderRecentExpenses();
-        }
-        
-        function updateSpendingBar(amountId, barId, spent, budget) {
-            document.getElementById(amountId).textContent = `฿${formatNumber(spent)}`;
-            const percent = Math.min((spent / budget) * 100, 100);
-            const bar = document.getElementById(barId);
-            bar.style.width = `${percent}%`;
-            bar.className = 'spending-bar-fill ' + (percent > 100 ? 'red' : percent > 80 ? 'yellow' : 'green');
-        }
-        
-        function updateProjection(months) {
-            const grid = document.getElementById('projectionGrid');
-            const now = new Date();
-            let html = '';
-            
-            for (let i = 1; i <= months; i++) {
-                const futureDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
-                const nextMonth = new Date(now.getFullYear(), now.getMonth() + i + 1, 0); // Last day of month
-                const monthName = futureDate.toLocaleDateString('en-US', { month: 'short' });
-                
-                // Expected income for this month
-                const monthIncome = income.filter(inc => {
-                    const d = new Date(inc.date);
-                    return d.getMonth() === futureDate.getMonth() && d.getFullYear() === futureDate.getFullYear();
-                }).reduce((sum, inc) => sum + inc.amount, 0);
-                
-                // Recurring expenses for this month
-                const monthRecurring = calculateRecurringForMonth(futureDate);
-                
-                // Planned one-time expenses for this month
-                const monthPlanned = plannedExpenses.filter(p => {
-                    const d = new Date(p.date);
-                    return d.getMonth() === futureDate.getMonth() && d.getFullYear() === futureDate.getFullYear();
-                }).reduce((sum, p) => sum + p.amount, 0);
-                
-                // Estimated daily spending
-                const estimatedDaily = settings.monthlySpendingEstimate || 50000;
-                
-                const totalExpenses = monthRecurring + monthPlanned + estimatedDaily;
-                const net = monthIncome - totalExpenses;
-                
-                html += `
-                    <div class="projection-month">
-                        <div class="projection-month-name">${monthName}</div>
-                        <div class="projection-month-net ${net >= 0 ? 'positive' : 'negative'}">
-                            ${net >= 0 ? '+' : ''}฿${formatCompact(net)}
-                        </div>
-                        <div class="projection-detail">In: ฿${formatCompact(monthIncome)}</div>
-                        <div class="projection-detail">Out: ฿${formatCompact(totalExpenses)}</div>
-                    </div>
-                `;
-            }
-            
-            grid.innerHTML = html;
-        }
-        
-        function calculateRecurringForMonth(targetDate) {
-            let total = 0;
-            const targetMonth = targetDate.getMonth();
-            const targetYear = targetDate.getFullYear();
-            
-            recurring.forEach(r => {
-                const dueDate = new Date(r.nextDueDate);
-                let checkDate = new Date(dueDate);
-                
-                // Check if any occurrence falls in target month
-                while (checkDate.getFullYear() < targetYear || 
-                       (checkDate.getFullYear() === targetYear && checkDate.getMonth() <= targetMonth)) {
-                    if (checkDate.getMonth() === targetMonth && checkDate.getFullYear() === targetYear) {
-                        total += r.amount;
-                        break;
-                    }
-                    // Advance to next occurrence
-                    switch(r.frequency) {
-                        case 'weekly': checkDate.setDate(checkDate.getDate() + 7); break;
-                        case 'monthly': checkDate.setMonth(checkDate.getMonth() + 1); break;
-                        case 'quarterly': checkDate.setMonth(checkDate.getMonth() + 3); break;
-                        case 'semester': checkDate.setMonth(checkDate.getMonth() + 6); break;
-                        case 'yearly': checkDate.setFullYear(checkDate.getFullYear() + 1); break;
-                    }
-                }
-            });
-            
-            return total;
-        }
-        
+        function formatNumber(num) { return Math.round(num).toLocaleString('en-US'); }
         function formatCompact(num) {
             if (Math.abs(num) >= 1000000) return (num / 1000000).toFixed(1) + 'M';
             if (Math.abs(num) >= 1000) return (num / 1000).toFixed(0) + 'K';
             return formatNumber(num);
         }
-
-        // ============================================
-        // UTILITIES
-        // ============================================
-        function formatNumber(num) { return Math.round(num).toLocaleString('en-US'); }
         function getCategoryName(id) { const cat = CATEGORIES.find(c => c.id === id); return cat ? cat.name : 'Other'; }
         function getCategoryColor(id) { const cat = CATEGORIES.find(c => c.id === id); return cat ? cat.color : '#78716c'; }
         function showToast(message, type = 'success') { const toast = document.getElementById('toast'); toast.textContent = message; toast.className = `toast ${type} show`; setTimeout(() => toast.classList.remove('show'), 3000); }
