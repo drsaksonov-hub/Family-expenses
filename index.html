@@ -509,7 +509,7 @@
                     <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
                 </svg>
             </button>
-            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v4.2</span></div>
+            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v4.3</span></div>
             <div class="header-date" id="currentDate"></div>
         </div>
     </header>
@@ -580,10 +580,10 @@
                     <div class="overview-card-title">📊 Monthly Spending</div>
                     <div class="overview-card-title" id="overviewMonth">November 2025</div>
                 </div>
-                <div class="chart-wrapper" style="height: 250px; position: relative;">
+                <div class="chart-wrapper" style="height: 200px; position: relative;">
                     <canvas id="monthlyPieChart"></canvas>
                 </div>
-                <div class="pie-total" id="pieTotalAmount">฿0</div>
+                <div class="pie-total" id="pieTotalAmount" style="margin-top: 8px;">฿0</div>
             </div>
             
             <!-- Income vs Expenses Projection Graph -->
@@ -621,6 +621,13 @@
                     <span class="cash-flow-label" style="font-weight: 600;">Net Cash Flow</span>
                     <span class="cash-flow-value" id="netCashFlow" style="font-size: 1.25rem;">฿0</span>
                 </div>
+            </div>
+            
+            <!-- Current Balance -->
+            <div class="overview-card" style="background: linear-gradient(135deg, var(--bg-card), var(--bg-elevated));">
+                <div class="overview-card-title" style="margin-bottom: 8px;">💵 CURRENT BALANCE</div>
+                <div style="font-size: 2rem; font-weight: 700; text-align: center;" id="currentBalance">฿0</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center;" id="balanceInfo">Since opening balance</div>
             </div>
             
             <!-- Recent Expenses -->
@@ -727,6 +734,21 @@
                     <div class="settings-item-info"><div class="settings-item-label">Partner's Name</div></div>
                     <input type="text" class="form-input" id="partnerName" style="width: 150px; padding: 10px;" placeholder="Partner name" onchange="saveSettings()">
                 </div>
+                <div class="settings-item">
+                    <div class="settings-item-info"><div class="settings-item-label">Who is using now?</div><div class="settings-item-desc">Select who is entering expenses</div></div>
+                    <select class="form-input" id="currentUser" style="width: 150px; padding: 10px;" onchange="saveSettings()">
+                        <option value="">Select...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-title">Opening Balance</div>
+                <div class="settings-item" style="flex-direction: column; align-items: stretch; cursor: default;">
+                    <div class="settings-item-info" style="margin-bottom: 12px;"><div class="settings-item-label">Starting Balance (฿)</div><div class="settings-item-desc">Set your actual balance to sync with app</div></div>
+                    <input type="number" class="form-input" id="openingBalance" placeholder="0" style="margin-bottom: 10px;" onchange="saveSettings()">
+                    <div class="settings-item-info"><div class="settings-item-label">Balance Date</div></div>
+                    <input type="date" class="form-input" id="openingBalanceDate" onchange="saveSettings()">
+                </div>
             </div>
             <div class="settings-section">
                 <div class="settings-title">Data</div>
@@ -735,7 +757,7 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 </div>
                 <div class="settings-item" onclick="clearAllData()">
-                    <div class="settings-item-info"><div class="settings-item-label" style="color: var(--accent-red);">Clear All Data</div><div class="settings-item-desc">Delete all expenses and reset app</div></div>
+                    <div class="settings-item-info"><div class="settings-item-label" style="color: var(--accent-red);">Clear All Data</div><div class="settings-item-desc">Requires security code: 150182</div></div>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </div>
             </div>
@@ -1250,7 +1272,7 @@
         let customCategories = [];
         let CATEGORIES = [...DEFAULT_CATEGORIES];
         const EXCHANGE_RATES = { THB: 1, USD: 35.5, EUR: 38.2 };
-        let expenses = [], budgets = {}, settings = { notificationsEnabled: true, notificationTime: '08:00', googleApiKey: '', userName: '', partnerName: '', totalBudget: 50000, dailyBudget: 3000, weeklyBudget: 21000, monthlySpendingEstimate: 50000 };
+        let expenses = [], budgets = {}, settings = { notificationsEnabled: true, notificationTime: '08:00', googleApiKey: '', userName: '', partnerName: '', currentUser: '', totalBudget: 50000, dailyBudget: 3000, weeklyBudget: 21000, monthlySpendingEstimate: 50000, openingBalance: 0, openingBalanceDate: '' };
         let firebaseConfig = null, database = null, isFirebaseConnected = false;
         let selectedCategory = null, currentChart = null, currentChartType = 'pie', isRecording = false, recognition = null;
         let income = [], recurring = [], plannedExpenses = [];
@@ -1283,11 +1305,17 @@
             document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
             document.getElementById('dateInput').value = now.toISOString().split('T')[0];
             populateCategoryGrid('categoryGrid'); populateCategoryGrid('ocrCategoryGrid'); populateCategoryGrid('voiceCategoryGrid'); populateBudgetCategories();
-            document.getElementById('notificationTime').value = settings.notificationTime;
-            document.getElementById('googleApiKey').value = settings.googleApiKey;
-            document.getElementById('userName').value = settings.userName;
-            document.getElementById('partnerName').value = settings.partnerName;
-            document.getElementById('totalBudgetInput').value = settings.totalBudget;
+            document.getElementById('notificationTime').value = settings.notificationTime || '08:00';
+            document.getElementById('googleApiKey').value = settings.googleApiKey || '';
+            document.getElementById('userName').value = settings.userName || '';
+            document.getElementById('partnerName').value = settings.partnerName || '';
+            document.getElementById('totalBudgetInput').value = settings.totalBudget || 50000;
+            document.getElementById('openingBalance').value = settings.openingBalance || '';
+            document.getElementById('openingBalanceDate').value = settings.openingBalanceDate || '';
+            
+            // Populate current user dropdown
+            updateUserDropdown();
+            
             if (settings.notificationsEnabled) document.getElementById('notificationToggle').classList.add('active');
             else document.getElementById('notificationToggle').classList.remove('active');
             // Load Firebase config into form if exists
@@ -1300,6 +1328,18 @@
                 document.getElementById('fbMessagingSenderId').value = firebaseConfig.messagingSenderId || '';
                 document.getElementById('fbAppId').value = firebaseConfig.appId || '';
             }
+        }
+        
+        function updateUserDropdown() {
+            const dropdown = document.getElementById('currentUser');
+            if (!dropdown) return;
+            
+            const userName = settings.userName || '';
+            const partnerName = settings.partnerName || '';
+            
+            dropdown.innerHTML = '<option value="">Select...</option>';
+            if (userName) dropdown.innerHTML += `<option value="${userName}" ${settings.currentUser === userName ? 'selected' : ''}>${userName}</option>`;
+            if (partnerName) dropdown.innerHTML += `<option value="${partnerName}" ${settings.currentUser === partnerName ? 'selected' : ''}>${partnerName}</option>`;
         }
 
         function initializeFirebase() {
@@ -1584,7 +1624,7 @@
             const amount = parseFloat(document.getElementById('amountInput').value), currency = document.getElementById('currencySelect').value, description = document.getElementById('descriptionInput').value.trim(), date = document.getElementById('dateInput').value;
             if (!amount || amount <= 0) { showToast('Please enter a valid amount', 'error'); return; }
             if (!selectedCategory) { showToast('Please select a category', 'error'); return; }
-            const expense = { amount: convertToTHB(amount, currency), originalAmount: amount, originalCurrency: currency, description: description || getCategoryName(selectedCategory), category: selectedCategory, date: date, inputType: 'manual', addedBy: settings.userName || 'Unknown', createdAt: new Date().toISOString() };
+            const expense = { amount: convertToTHB(amount, currency), originalAmount: amount, originalCurrency: currency, description: description || getCategoryName(selectedCategory), category: selectedCategory, date: date, inputType: 'manual', addedBy: settings.currentUser || settings.userName || 'Unknown', createdAt: new Date().toISOString() };
             
             // Check for duplicates
             const duplicates = checkForDuplicate(expense);
@@ -1957,7 +1997,7 @@
                     category: exp.category,
                     date: exp.date,
                     inputType: 'multi-screenshot',
-                    addedBy: settings.userName || 'Unknown',
+                    addedBy: settings.currentUser || settings.userName || 'Unknown',
                     createdAt: new Date().toISOString()
                 };
                 
@@ -2036,7 +2076,7 @@
             const amount = parseFloat(document.getElementById('ocrAmountInput').value), currency = document.getElementById('ocrCurrencySelect').value, description = document.getElementById('ocrDescriptionInput').value.trim();
             if (!amount || amount <= 0) { showToast('Please enter a valid amount', 'error'); return; }
             if (!selectedCategory) { showToast('Please select a category', 'error'); return; }
-            const expense = { amount: convertToTHB(amount, currency), originalAmount: amount, originalCurrency: currency, description: description || getCategoryName(selectedCategory), category: selectedCategory, date: new Date().toISOString().split('T')[0], inputType: 'receipt', addedBy: settings.userName || 'Unknown', createdAt: new Date().toISOString() };
+            const expense = { amount: convertToTHB(amount, currency), originalAmount: amount, originalCurrency: currency, description: description || getCategoryName(selectedCategory), category: selectedCategory, date: new Date().toISOString().split('T')[0], inputType: 'receipt', addedBy: settings.currentUser || settings.userName || 'Unknown', createdAt: new Date().toISOString() };
             
             // Check for duplicates
             const duplicates = checkForDuplicate(expense);
@@ -2235,7 +2275,7 @@
             const amount = parseFloat(document.getElementById('voiceAmountInput').value), currency = document.getElementById('voiceCurrencySelect').value, description = document.getElementById('voiceDescriptionInput').value.trim();
             if (!amount || amount <= 0) { showToast('Please enter a valid amount', 'error'); return; }
             if (!selectedCategory) { showToast('Please select a category', 'error'); return; }
-            const expense = { amount: convertToTHB(amount, currency), originalAmount: amount, originalCurrency: currency, description: description || getCategoryName(selectedCategory), category: selectedCategory, date: new Date().toISOString().split('T')[0], inputType: 'voice', addedBy: settings.userName || 'Unknown', createdAt: new Date().toISOString() };
+            const expense = { amount: convertToTHB(amount, currency), originalAmount: amount, originalCurrency: currency, description: description || getCategoryName(selectedCategory), category: selectedCategory, date: new Date().toISOString().split('T')[0], inputType: 'voice', addedBy: settings.currentUser || settings.userName || 'Unknown', createdAt: new Date().toISOString() };
             
             // Check for duplicates
             const duplicates = checkForDuplicate(expense);
@@ -2565,7 +2605,7 @@
                     category: t.category, 
                     date: t.date, 
                     inputType: 'statement',
-                    addedBy: settings.userName || 'Unknown',
+                    addedBy: settings.currentUser || settings.userName || 'Unknown',
                     createdAt: new Date().toISOString() 
                 };
                 
@@ -2617,6 +2657,9 @@
             netEl.textContent = `${netCashFlow >= 0 ? '+' : ''}฿${formatNumber(netCashFlow)}`;
             netEl.className = 'cash-flow-value ' + (netCashFlow >= 0 ? 'income' : 'expense');
             
+            // Calculate current balance
+            calculateCurrentBalance();
+            
             // Render pie chart
             renderMonthlyPieChart(monthExpenses);
             
@@ -2628,6 +2671,38 @@
             
             // Render recent expenses
             renderRecentExpenses();
+        }
+        
+        function calculateCurrentBalance() {
+            const openingBalance = settings.openingBalance || 0;
+            const openingDate = settings.openingBalanceDate;
+            
+            if (!openingDate) {
+                document.getElementById('currentBalance').textContent = 'Set opening balance in Settings';
+                document.getElementById('currentBalance').style.fontSize = '1rem';
+                document.getElementById('balanceInfo').textContent = '';
+                return;
+            }
+            
+            // Calculate total income received since opening date
+            const totalIncomeReceived = income
+                .filter(i => i.status === 'received' && i.date >= openingDate)
+                .reduce((sum, i) => sum + i.amount, 0);
+            
+            // Calculate total expenses since opening date
+            const totalExpenses = expenses
+                .filter(e => e.date >= openingDate)
+                .reduce((sum, e) => sum + e.amount, 0);
+            
+            const currentBalance = openingBalance + totalIncomeReceived - totalExpenses;
+            
+            const balanceEl = document.getElementById('currentBalance');
+            balanceEl.textContent = `฿${formatNumber(currentBalance)}`;
+            balanceEl.style.fontSize = '2rem';
+            balanceEl.style.color = currentBalance >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+            
+            const openingDateFormatted = new Date(openingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            document.getElementById('balanceInfo').textContent = `Since ${openingDateFormatted} | Opening: ฿${formatNumber(openingBalance)}`;
         }
         
         function renderMonthlyPieChart(monthExpenses) {
@@ -2908,10 +2983,53 @@
         }
 
         function saveSettings() {
-            settings.userName = document.getElementById('userName').value;
-            settings.googleApiKey = document.getElementById('googleApiKey').value;
-            saveLocalData();
+            settings.userName = document.getElementById('userName').value.trim();
+            settings.partnerName = document.getElementById('partnerName').value.trim();
+            settings.currentUser = document.getElementById('currentUser').value;
+            settings.googleApiKey = document.getElementById('googleApiKey').value.trim();
+            settings.notificationTime = document.getElementById('notificationTime').value;
+            settings.openingBalance = parseFloat(document.getElementById('openingBalance').value) || 0;
+            settings.openingBalanceDate = document.getElementById('openingBalanceDate').value;
+            
+            // Update user dropdown when names change
+            updateUserDropdown();
+            
+            // Save to localStorage
+            saveData();
+            
+            // Also sync settings to Firebase if connected
+            if (database) {
+                database.ref('settings').set(settings);
+            }
+            
             showToast('Settings saved', 'success');
+        }
+        
+        function clearAllData() {
+            const code = prompt('⚠️ WARNING: This will delete ALL expenses and income data!\n\nEnter security code to confirm:');
+            if (code !== '150182') {
+                if (code !== null) showToast('Incorrect security code', 'error');
+                return;
+            }
+            
+            // Clear expenses and income, but keep settings
+            expenses = [];
+            income = [];
+            plannedExpenses = [];
+            // Keep recurring as they are setup, not data
+            
+            // Clear from Firebase
+            if (database) {
+                database.ref('expenses').remove();
+                database.ref('income').remove();
+                database.ref('plannedExpenses').remove();
+            }
+            
+            // Save
+            saveData();
+            updateDashboard();
+            
+            showToast('All expense and income data cleared', 'success');
         }
 
         function exportData() {
@@ -3087,7 +3205,7 @@
             const newIncome = {
                 id: Date.now().toString(),
                 date, amount, description: description || 'Income',
-                status, addedBy: settings.userName || 'Unknown',
+                status, addedBy: settings.currentUser || settings.userName || 'Unknown',
                 createdAt: new Date().toISOString()
             };
             
@@ -3221,7 +3339,7 @@
                 id: Date.now().toString(),
                 name, amount, frequency, nextDueDate,
                 lastPaidDate: null,
-                addedBy: settings.userName || 'Unknown',
+                addedBy: settings.currentUser || settings.userName || 'Unknown',
                 createdAt: new Date().toISOString()
             };
             
@@ -3259,7 +3377,7 @@
                 category: 'other',
                 date: new Date().toISOString().split('T')[0],
                 inputType: 'recurring',
-                addedBy: settings.userName || 'Unknown',
+                addedBy: settings.currentUser || settings.userName || 'Unknown',
                 createdAt: new Date().toISOString()
             };
             
@@ -3397,7 +3515,7 @@
                 id: Date.now().toString(),
                 description, amount, date,
                 status: 'pending',
-                addedBy: settings.userName || 'Unknown',
+                addedBy: settings.currentUser || settings.userName || 'Unknown',
                 createdAt: new Date().toISOString()
             };
             
@@ -3463,7 +3581,7 @@
                 category: 'other',
                 date: new Date().toISOString().split('T')[0],
                 inputType: 'planned',
-                addedBy: settings.userName || 'Unknown',
+                addedBy: settings.currentUser || settings.userName || 'Unknown',
                 createdAt: new Date().toISOString()
             };
             
