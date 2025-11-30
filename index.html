@@ -302,6 +302,129 @@
         .hidden { display: none !important; }
         .mt-4 { margin-top: 16px; }
         .mb-4 { margin-bottom: 16px; }
+        
+        /* Hamburger Menu Button */
+        .hamburger-btn {
+            background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 8px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .header-content { display: flex; align-items: center; gap: 12px; }
+        
+        /* Side Menu */
+        .side-menu-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 999; opacity: 0;
+            visibility: hidden; transition: all 0.3s ease;
+        }
+        .side-menu-overlay.active { opacity: 1; visibility: visible; }
+        .side-menu {
+            position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
+            background: var(--bg-card); z-index: 1000; transition: left 0.3s ease;
+            display: flex; flex-direction: column;
+        }
+        .side-menu.active { left: 0; }
+        .side-menu-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px; border-bottom: 1px solid var(--border);
+        }
+        .side-menu-header h2 { font-size: 1.25rem; font-weight: 600; }
+        .side-menu-close { background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; }
+        .side-menu-items { flex: 1; padding: 12px 0; }
+        .side-menu-item {
+            display: flex; align-items: center; gap: 16px; padding: 16px 20px;
+            color: var(--text-primary); cursor: pointer; transition: background 0.2s;
+        }
+        .side-menu-item:hover { background: var(--bg-elevated); }
+        .side-menu-item svg { color: var(--accent-cyan); }
+        .side-menu-divider { height: 1px; background: var(--border); margin: 12px 0; }
+        
+        /* Overview Cards */
+        .overview-card {
+            background: var(--bg-card); border-radius: 16px; padding: 20px;
+            margin-bottom: 16px; border: 1px solid var(--border);
+        }
+        .overview-card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px;
+        }
+        .overview-card-title { font-size: 0.9rem; color: var(--text-secondary); font-weight: 500; }
+        .overview-card-amount { font-size: 1.75rem; font-weight: 700; }
+        .overview-card-amount.positive { color: var(--accent-green); }
+        .overview-card-amount.negative { color: var(--accent-red); }
+        
+        .spending-bar-container { margin-bottom: 12px; }
+        .spending-bar-label { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px; }
+        .spending-bar-label span:first-child { color: var(--text-secondary); }
+        .spending-bar { height: 8px; background: var(--bg-elevated); border-radius: 4px; overflow: hidden; }
+        .spending-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+        .spending-bar-fill.green { background: var(--accent-green); }
+        .spending-bar-fill.yellow { background: var(--accent-orange); }
+        .spending-bar-fill.red { background: var(--accent-red); }
+        
+        .cash-flow-row {
+            display: flex; justify-content: space-between; padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .cash-flow-row:last-child { border-bottom: none; }
+        .cash-flow-label { color: var(--text-secondary); }
+        .cash-flow-value { font-weight: 600; }
+        .cash-flow-value.income { color: var(--accent-green); }
+        .cash-flow-value.expense { color: var(--accent-red); }
+        
+        /* Projection Grid */
+        .projection-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+        }
+        .projection-month {
+            background: var(--bg-elevated); border-radius: 12px; padding: 12px;
+            text-align: center;
+        }
+        .projection-month-name { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; }
+        .projection-month-net { font-size: 1.1rem; font-weight: 600; }
+        .projection-month-net.positive { color: var(--accent-green); }
+        .projection-month-net.negative { color: var(--accent-red); }
+        .projection-detail { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+        
+        /* Income & Recurring Lists */
+        .income-item, .recurring-item {
+            background: var(--bg-card); border-radius: 12px; padding: 16px;
+            margin-bottom: 12px; border: 1px solid var(--border);
+        }
+        .income-item-header, .recurring-item-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+        }
+        .income-item-desc { font-weight: 500; margin-bottom: 4px; }
+        .income-item-date { font-size: 0.85rem; color: var(--text-muted); }
+        .income-item-amount { font-size: 1.25rem; font-weight: 600; color: var(--accent-green); }
+        .income-item-status {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; margin-top: 8px;
+        }
+        .income-item-status.received { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+        .income-item-status.expected { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+        
+        .recurring-item-name { font-weight: 500; }
+        .recurring-item-freq { font-size: 0.85rem; color: var(--text-muted); }
+        .recurring-item-amount { font-size: 1.1rem; font-weight: 600; color: var(--accent-red); }
+        .recurring-item-next { font-size: 0.8rem; color: var(--text-muted); margin-top: 8px; }
+        .recurring-item-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .btn-mark-paid {
+            flex: 1; padding: 10px; border: none; border-radius: 8px;
+            background: var(--accent-green); color: white; font-weight: 500; cursor: pointer;
+        }
+        .btn-edit-item {
+            padding: 10px 16px; border: 1px solid var(--border); border-radius: 8px;
+            background: transparent; color: var(--text-secondary); cursor: pointer;
+        }
+        
+        /* Add Button FAB style for lists */
+        .fab-add {
+            position: fixed; bottom: 100px; right: 20px; width: 56px; height: 56px;
+            border-radius: 50%; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border: none; color: white; font-size: 24px; cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 229, 204, 0.3); z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
@@ -309,10 +432,51 @@
     <div class="bg-gradient"></div>
     <header class="header">
         <div class="header-content">
-            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v3.2</span></div>
+            <button class="hamburger-btn" onclick="toggleSideMenu()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                    <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+            </button>
+            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v4.1</span></div>
             <div class="header-date" id="currentDate"></div>
         </div>
     </header>
+    
+    <!-- Side Menu -->
+    <div class="side-menu-overlay" id="sideMenuOverlay" onclick="toggleSideMenu()"></div>
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-header">
+            <h2>Menu</h2>
+            <button class="side-menu-close" onclick="toggleSideMenu()">✕</button>
+        </div>
+        <div class="side-menu-items">
+            <div class="side-menu-item" onclick="showView('income'); toggleSideMenu();">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                <span>Income</span>
+            </div>
+            <div class="side-menu-item" onclick="showView('recurring'); toggleSideMenu();">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                    <path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                </svg>
+                <span>Recurring Payments</span>
+            </div>
+            <div class="side-menu-divider"></div>
+            <div class="side-menu-item" onclick="showView('settings'); toggleSideMenu();">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span>Settings</span>
+            </div>
+            <div class="side-menu-item" onclick="exportData(); toggleSideMenu();">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span>Export Data</span>
+            </div>
+        </div>
+    </div>
     <main class="container" id="mainContent">
         <!-- Firebase Setup Banner (shown when not configured) -->
         <div class="setup-banner hidden" id="setupBanner">
@@ -322,20 +486,81 @@
         </div>
         
         <div id="dashboardView">
-            <div class="budget-card">
-                <div class="budget-header">
-                    <div>
-                        <div class="budget-title">Monthly Spending</div>
-                        <div class="budget-amount"><span class="currency">฿</span><span id="totalSpent">0</span></div>
-                    </div>
-                    <div class="budget-remaining">
-                        <div class="budget-remaining-label">Budget Remaining</div>
-                        <div class="budget-remaining-amount" id="budgetRemaining">฿0</div>
-                    </div>
+            <!-- Overview Header -->
+            <div class="overview-card">
+                <div class="overview-card-header">
+                    <div class="overview-card-title">📊 FINANCIAL OVERVIEW</div>
+                    <div class="overview-card-title" id="overviewMonth">November 2025</div>
                 </div>
-                <div class="budget-progress"><div class="budget-progress-bar" id="budgetProgressBar" style="width: 0%"></div></div>
-                <div class="budget-meta"><span id="budgetPercent">0% of budget</span><span id="daysRemaining">0 days left</span></div>
             </div>
+            
+            <!-- Spending Progress -->
+            <div class="overview-card">
+                <div class="spending-bar-container">
+                    <div class="spending-bar-label">
+                        <span>Today's Spending</span>
+                        <span><strong id="todaySpent">฿0</strong> of ฿<span id="dailyBudgetDisplay">3,000</span></span>
+                    </div>
+                    <div class="spending-bar"><div class="spending-bar-fill green" id="todayBar" style="width: 0%"></div></div>
+                </div>
+                <div class="spending-bar-container">
+                    <div class="spending-bar-label">
+                        <span>This Week</span>
+                        <span><strong id="weekSpent">฿0</strong> of ฿<span id="weeklyBudgetDisplay">21,000</span></span>
+                    </div>
+                    <div class="spending-bar"><div class="spending-bar-fill green" id="weekBar" style="width: 0%"></div></div>
+                </div>
+                <div class="spending-bar-container">
+                    <div class="spending-bar-label">
+                        <span>This Month</span>
+                        <span><strong id="monthSpent">฿0</strong> of ฿<span id="monthlyBudgetDisplay">50,000</span></span>
+                    </div>
+                    <div class="spending-bar"><div class="spending-bar-fill green" id="monthBar" style="width: 0%"></div></div>
+                </div>
+            </div>
+            
+            <!-- Cash Flow Summary -->
+            <div class="overview-card">
+                <div class="overview-card-title" style="margin-bottom: 12px;">💰 CASH FLOW - This Month</div>
+                <div class="cash-flow-row">
+                    <span class="cash-flow-label">Income Received</span>
+                    <span class="cash-flow-value income" id="incomeReceived">฿0</span>
+                </div>
+                <div class="cash-flow-row">
+                    <span class="cash-flow-label">Income Expected</span>
+                    <span class="cash-flow-value" style="color: var(--accent-orange);" id="incomeExpected">฿0</span>
+                </div>
+                <div class="cash-flow-row">
+                    <span class="cash-flow-label">Daily Spending</span>
+                    <span class="cash-flow-value expense" id="dailySpendingTotal">-฿0</span>
+                </div>
+                <div class="cash-flow-row">
+                    <span class="cash-flow-label">Recurring Paid</span>
+                    <span class="cash-flow-value expense" id="recurringPaid">-฿0</span>
+                </div>
+                <div class="cash-flow-row">
+                    <span class="cash-flow-label">Recurring Upcoming</span>
+                    <span class="cash-flow-value" style="color: var(--text-muted);" id="recurringUpcoming">฿0</span>
+                </div>
+                <div class="cash-flow-row" style="border-top: 2px solid var(--border); padding-top: 12px; margin-top: 8px;">
+                    <span class="cash-flow-label" style="font-weight: 600;">Net Cash Flow</span>
+                    <span class="cash-flow-value" id="netCashFlow" style="font-size: 1.25rem;">฿0</span>
+                </div>
+            </div>
+            
+            <!-- 3-Month Projection -->
+            <div class="overview-card">
+                <div class="overview-card-title" style="margin-bottom: 16px;">📅 3-MONTH PROJECTION</div>
+                <div class="projection-grid" id="projectionGrid">
+                    <!-- Filled by JS -->
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 16px;">
+                    <button class="chart-tab" onclick="updateProjection(6)" style="flex:1;">6 Months</button>
+                    <button class="chart-tab" onclick="updateProjection(12)" style="flex:1;">12 Months</button>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
             <div class="quick-actions">
                 <button class="action-btn" onclick="openModal('textModal')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -354,17 +579,8 @@
                     <span>Upload</span>
                 </button>
             </div>
-            <div class="chart-container">
-                <div class="section-header"><h2 class="section-title">Spending Overview</h2></div>
-                <div class="chart-tabs">
-                    <button class="chart-tab active" onclick="switchChart('pie')">Categories</button>
-                    <button class="chart-tab" onclick="switchChart('bar')">Daily</button>
-                    <button class="chart-tab" onclick="switchChart('line')">Trend</button>
-                </div>
-                <div class="chart-wrapper"><canvas id="mainChart"></canvas></div>
-            </div>
-            <div class="section-header"><h2 class="section-title">By Category</h2><a href="#" class="section-link" onclick="showView('categories'); return false;">See all</a></div>
-            <div class="category-list" id="categoryList"></div>
+            
+            <!-- Recent Expenses -->
             <div class="section-header mt-4"><h2 class="section-title">Recent Expenses</h2><a href="#" class="section-link" onclick="showView('expenses'); return false;">See all</a></div>
             <div class="expense-list" id="recentExpenses"></div>
         </div>
@@ -382,6 +598,37 @@
             <div class="section-header"><h2 class="section-title">Categories</h2></div>
             <div class="category-list" id="allCategories"></div>
         </div>
+        
+        <!-- Income View -->
+        <div id="incomeView" class="hidden">
+            <div class="section-header">
+                <h2 class="section-title">💰 Income</h2>
+                <button class="section-link" onclick="openModal('incomeModal')" style="background: var(--accent-green); color: white; padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer;">+ Add</button>
+            </div>
+            <div class="view-tabs">
+                <button class="view-tab active" onclick="filterIncome('all')">All</button>
+                <button class="view-tab" onclick="filterIncome('received')">Received</button>
+                <button class="view-tab" onclick="filterIncome('expected')">Expected</button>
+            </div>
+            <div id="incomeList"></div>
+        </div>
+        
+        <!-- Recurring Payments View -->
+        <div id="recurringView" class="hidden">
+            <div class="section-header">
+                <h2 class="section-title">🔄 Recurring Payments</h2>
+                <button class="section-link" onclick="openModal('recurringModal')" style="background: var(--accent-purple); color: white; padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer;">+ Add</button>
+            </div>
+            <div id="recurringList"></div>
+            
+            <div class="section-header" style="margin-top: 24px;">
+                <h2 class="section-title">📅 Planned Expenses</h2>
+                <button class="section-link" onclick="openModal('plannedExpenseModal')" style="background: var(--accent-orange); color: white; padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer;">+ Add</button>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;">One-time future expenses (trips, purchases, etc.)</p>
+            <div id="plannedExpensesList"></div>
+        </div>
+        
         <div id="settingsView" class="hidden">
             <div class="section-header"><h2 class="section-title">Settings</h2></div>
             <div class="settings-section">
@@ -454,8 +701,8 @@
     <nav class="bottom-nav">
         <div class="nav-items">
             <button class="nav-item active" id="navDashboard" onclick="showView('dashboard')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
-                <span>Home</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span>Overview</span>
             </button>
             <button class="nav-item" id="navExpenses" onclick="showView('expenses')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
@@ -467,10 +714,6 @@
             <button class="nav-item" id="navCategories" onclick="showView('categories')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M12 2v20"/><path d="M2 12h20"/></svg>
                 <span>Categories</span>
-            </button>
-            <button class="nav-item" id="navSettings" onclick="showView('settings')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                <span>Settings</span>
             </button>
         </div>
     </nav>
@@ -739,6 +982,193 @@
         </div>
     </div>
 
+    <!-- Income Modal -->
+    <div class="modal-overlay" id="incomeModal">
+        <div class="modal">
+            <div class="modal-header"><h2 class="modal-title">Add Income</h2><button class="modal-close" onclick="closeModal('incomeModal')">✕</button></div>
+            <div style="padding: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="incomeDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (฿)</label>
+                    <input type="number" class="form-input" id="incomeAmount" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-input" id="incomeDescription" placeholder="e.g., Radiology payment">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <div style="display: flex; gap: 12px;">
+                        <label style="flex:1; display:flex; align-items:center; gap:8px; padding:12px; background:var(--bg-elevated); border-radius:8px; cursor:pointer;">
+                            <input type="radio" name="incomeStatus" value="expected" checked> Expected
+                        </label>
+                        <label style="flex:1; display:flex; align-items:center; gap:8px; padding:12px; background:var(--bg-elevated); border-radius:8px; cursor:pointer;">
+                            <input type="radio" name="incomeStatus" value="received"> Received
+                        </label>
+                    </div>
+                </div>
+                <button class="submit-btn" onclick="addIncome()">Add Income</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Income Modal -->
+    <div class="modal-overlay" id="editIncomeModal">
+        <div class="modal">
+            <div class="modal-header"><h2 class="modal-title">Edit Income</h2><button class="modal-close" onclick="closeModal('editIncomeModal')">✕</button></div>
+            <div style="padding: 20px;">
+                <input type="hidden" id="editIncomeId">
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="editIncomeDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (฿)</label>
+                    <input type="number" class="form-input" id="editIncomeAmount" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-input" id="editIncomeDescription" placeholder="e.g., Radiology payment">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <div style="display: flex; gap: 12px;">
+                        <label style="flex:1; display:flex; align-items:center; gap:8px; padding:12px; background:var(--bg-elevated); border-radius:8px; cursor:pointer;">
+                            <input type="radio" name="editIncomeStatus" value="expected"> Expected
+                        </label>
+                        <label style="flex:1; display:flex; align-items:center; gap:8px; padding:12px; background:var(--bg-elevated); border-radius:8px; cursor:pointer;">
+                            <input type="radio" name="editIncomeStatus" value="received"> Received
+                        </label>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button class="submit-btn" onclick="saveIncomeEdit()" style="flex:1;">Save Changes</button>
+                    <button class="submit-btn" onclick="deleteIncome()" style="flex:1; background: #ef4444;">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recurring Payment Modal -->
+    <div class="modal-overlay" id="recurringModal">
+        <div class="modal">
+            <div class="modal-header"><h2 class="modal-title">Add Recurring Payment</h2><button class="modal-close" onclick="closeModal('recurringModal')">✕</button></div>
+            <div style="padding: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" id="recurringName" placeholder="e.g., Housekeeper, Rent">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (฿)</label>
+                    <input type="number" class="form-input" id="recurringAmount" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Frequency</label>
+                    <select class="form-input" id="recurringFrequency">
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly" selected>Monthly</option>
+                        <option value="quarterly">Quarterly (3 months)</option>
+                        <option value="semester">Semester (6 months)</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Next Due Date</label>
+                    <input type="date" class="form-input" id="recurringDueDate">
+                </div>
+                <button class="submit-btn" onclick="addRecurring()">Add Recurring Payment</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Recurring Modal -->
+    <div class="modal-overlay" id="editRecurringModal">
+        <div class="modal">
+            <div class="modal-header"><h2 class="modal-title">Edit Recurring Payment</h2><button class="modal-close" onclick="closeModal('editRecurringModal')">✕</button></div>
+            <div style="padding: 20px;">
+                <input type="hidden" id="editRecurringId">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" id="editRecurringName" placeholder="e.g., Housekeeper, Rent">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (฿)</label>
+                    <input type="number" class="form-input" id="editRecurringAmount" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Frequency</label>
+                    <select class="form-input" id="editRecurringFrequency">
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="quarterly">Quarterly (3 months)</option>
+                        <option value="semester">Semester (6 months)</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Next Due Date</label>
+                    <input type="date" class="form-input" id="editRecurringDueDate">
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button class="submit-btn" onclick="saveRecurringEdit()" style="flex:1;">Save Changes</button>
+                    <button class="submit-btn" onclick="deleteRecurring()" style="flex:1; background: #ef4444;">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Planned Expense Modal (One-time future expense) -->
+    <div class="modal-overlay" id="plannedExpenseModal">
+        <div class="modal">
+            <div class="modal-header"><h2 class="modal-title">Add Planned Expense</h2><button class="modal-close" onclick="closeModal('plannedExpenseModal')">✕</button></div>
+            <div style="padding: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-input" id="plannedDescription" placeholder="e.g., Flight tickets to Japan">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (฿)</label>
+                    <input type="number" class="form-input" id="plannedAmount" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Expected Date</label>
+                    <input type="date" class="form-input" id="plannedDate">
+                </div>
+                <button class="submit-btn" onclick="addPlannedExpense()">Add Planned Expense</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Planned Expense Modal -->
+    <div class="modal-overlay" id="editPlannedExpenseModal">
+        <div class="modal">
+            <div class="modal-header"><h2 class="modal-title">Edit Planned Expense</h2><button class="modal-close" onclick="closeModal('editPlannedExpenseModal')">✕</button></div>
+            <div style="padding: 20px;">
+                <input type="hidden" id="editPlannedId">
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-input" id="editPlannedDescription" placeholder="e.g., Flight tickets to Japan">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (฿)</label>
+                    <input type="number" class="form-input" id="editPlannedAmount" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Expected Date</label>
+                    <input type="date" class="form-input" id="editPlannedDate">
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button class="submit-btn" onclick="savePlannedEdit()" style="flex:1;">Save Changes</button>
+                    <button class="submit-btn" onclick="markPlannedAsPaid()" style="flex:1; background: var(--accent-green);">Mark Paid</button>
+                    <button class="submit-btn" onclick="deletePlanned()" style="flex:1; background: #ef4444;">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <script>
@@ -764,19 +1194,33 @@
         let customCategories = [];
         let CATEGORIES = [...DEFAULT_CATEGORIES];
         const EXCHANGE_RATES = { THB: 1, USD: 35.5, EUR: 38.2 };
-        let expenses = [], budgets = {}, settings = { notificationsEnabled: true, notificationTime: '08:00', googleApiKey: '', userName: '', partnerName: '', totalBudget: 50000 };
+        let expenses = [], budgets = {}, settings = { notificationsEnabled: true, notificationTime: '08:00', googleApiKey: '', userName: '', partnerName: '', totalBudget: 50000, dailyBudget: 3000, weeklyBudget: 21000, monthlySpendingEstimate: 50000 };
         let firebaseConfig = null, database = null, isFirebaseConnected = false;
         let selectedCategory = null, currentChart = null, currentChartType = 'pie', isRecording = false, recognition = null;
+        let income = [], recurring = [], plannedExpenses = [];
 
         document.addEventListener('DOMContentLoaded', () => { loadData(); initializeUI(); initializeSpeechRecognition(); initializeFirebase(); updateDashboard(); requestNotificationPermission(); });
 
         function loadData() {
             const e = localStorage.getItem('familyExpenses'), b = localStorage.getItem('familyBudgets'), s = localStorage.getItem('familySettings'), cc = localStorage.getItem('customCategories'), fb = localStorage.getItem('firebaseConfig');
+            const inc = localStorage.getItem('familyIncome'), rec = localStorage.getItem('familyRecurring'), plan = localStorage.getItem('familyPlannedExpenses');
             if (e) expenses = JSON.parse(e); if (b) budgets = JSON.parse(b); if (s) settings = { ...settings, ...JSON.parse(s) };
             if (cc) { customCategories = JSON.parse(cc); CATEGORIES = [...DEFAULT_CATEGORIES, ...customCategories]; }
             if (fb) firebaseConfig = JSON.parse(fb);
+            if (inc) income = JSON.parse(inc);
+            if (rec) recurring = JSON.parse(rec);
+            if (plan) plannedExpenses = JSON.parse(plan);
         }
-        function saveData() { localStorage.setItem('familyExpenses', JSON.stringify(expenses)); localStorage.setItem('familyBudgets', JSON.stringify(budgets)); localStorage.setItem('familySettings', JSON.stringify(settings)); localStorage.setItem('customCategories', JSON.stringify(customCategories)); if (firebaseConfig) localStorage.setItem('firebaseConfig', JSON.stringify(firebaseConfig)); }
+        function saveData() { 
+            localStorage.setItem('familyExpenses', JSON.stringify(expenses)); 
+            localStorage.setItem('familyBudgets', JSON.stringify(budgets)); 
+            localStorage.setItem('familySettings', JSON.stringify(settings)); 
+            localStorage.setItem('customCategories', JSON.stringify(customCategories)); 
+            localStorage.setItem('familyIncome', JSON.stringify(income));
+            localStorage.setItem('familyRecurring', JSON.stringify(recurring));
+            localStorage.setItem('familyPlannedExpenses', JSON.stringify(plannedExpenses));
+            if (firebaseConfig) localStorage.setItem('firebaseConfig', JSON.stringify(firebaseConfig)); 
+        }
 
         function initializeUI() {
             const now = new Date();
@@ -843,6 +1287,33 @@
                         populateBudgetCategories();
                     }
                 });
+                // Listen for income
+                database.ref('income').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    income = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                    if (document.getElementById('incomeView') && !document.getElementById('incomeView').classList.contains('hidden')) {
+                        renderIncomeList();
+                    }
+                    updateDashboard();
+                });
+                // Listen for recurring
+                database.ref('recurring').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    recurring = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                    if (document.getElementById('recurringView') && !document.getElementById('recurringView').classList.contains('hidden')) {
+                        renderRecurringList();
+                    }
+                    updateDashboard();
+                });
+                // Listen for planned expenses
+                database.ref('plannedExpenses').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    plannedExpenses = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                    if (document.getElementById('recurringView') && !document.getElementById('recurringView').classList.contains('hidden')) {
+                        renderPlannedExpensesList();
+                    }
+                    updateDashboard();
+                });
                 isFirebaseConnected = true;
                 if (statusDesc) statusDesc.textContent = 'Connected ✓ (Project: ' + firebaseConfig.projectId + ')';
                 showToast('Connected to Firebase!', 'success');
@@ -897,10 +1368,40 @@
         }
 
         function showView(viewName) {
-            ['dashboard', 'expenses', 'categories', 'settings'].forEach(v => { document.getElementById(v + 'View').classList.add('hidden'); document.getElementById('nav' + v.charAt(0).toUpperCase() + v.slice(1)).classList.remove('active'); });
-            document.getElementById(viewName + 'View').classList.remove('hidden');
-            document.getElementById('nav' + viewName.charAt(0).toUpperCase() + viewName.slice(1)).classList.add('active');
-            if (viewName === 'dashboard') updateDashboard(); else if (viewName === 'expenses') renderAllExpenses(); else if (viewName === 'categories') renderAllCategories();
+            const allViews = ['dashboard', 'expenses', 'categories', 'settings', 'income', 'recurring'];
+            const bottomNavViews = ['dashboard', 'expenses', 'categories'];
+            
+            // Hide all views
+            allViews.forEach(v => { 
+                const el = document.getElementById(v + 'View');
+                if (el) el.classList.add('hidden'); 
+            });
+            
+            // Remove active from bottom nav
+            bottomNavViews.forEach(v => {
+                const nav = document.getElementById('nav' + v.charAt(0).toUpperCase() + v.slice(1));
+                if (nav) nav.classList.remove('active');
+            });
+            
+            // Show selected view
+            const viewEl = document.getElementById(viewName + 'View');
+            if (viewEl) viewEl.classList.remove('hidden');
+            
+            // Set active on bottom nav if applicable
+            const navEl = document.getElementById('nav' + viewName.charAt(0).toUpperCase() + viewName.slice(1));
+            if (navEl) navEl.classList.add('active');
+            
+            // Call appropriate render function
+            if (viewName === 'dashboard') updateDashboard(); 
+            else if (viewName === 'expenses') renderAllExpenses(); 
+            else if (viewName === 'categories') renderAllCategories();
+            else if (viewName === 'income') renderIncomeList();
+            else if (viewName === 'recurring') { renderRecurringList(); renderPlannedExpensesList(); }
+        }
+        
+        function toggleSideMenu() {
+            document.getElementById('sideMenu').classList.toggle('active');
+            document.getElementById('sideMenuOverlay').classList.toggle('active');
         }
 
         function openModal(modalId) {
@@ -923,6 +1424,22 @@
             }
             if (modalId === 'categoryModal') {
                 renderCategoryLists();
+            }
+            if (modalId === 'incomeModal') {
+                document.getElementById('incomeDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('incomeAmount').value = '';
+                document.getElementById('incomeDescription').value = '';
+                document.querySelector('input[name="incomeStatus"][value="expected"]').checked = true;
+            }
+            if (modalId === 'recurringModal') {
+                document.getElementById('recurringName').value = '';
+                document.getElementById('recurringAmount').value = '';
+                document.getElementById('recurringDueDate').value = new Date().toISOString().split('T')[0];
+            }
+            if (modalId === 'plannedExpenseModal') {
+                document.getElementById('plannedDescription').value = '';
+                document.getElementById('plannedAmount').value = '';
+                document.getElementById('plannedDate').value = new Date().toISOString().split('T')[0];
             }
         }
         function closeModal(modalId) { 
@@ -2271,6 +2788,631 @@
                     <div class="category-info"><div class="category-name">${cat.name}</div></div>
                 </div>
             `).join('');
+        }
+
+        // ============================================
+        // INCOME MANAGEMENT
+        // ============================================
+        function renderIncomeList(filter = 'all') {
+            let filtered = [...income];
+            if (filter === 'received') filtered = filtered.filter(i => i.status === 'received');
+            else if (filter === 'expected') filtered = filtered.filter(i => i.status === 'expected');
+            
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            const container = document.getElementById('incomeList');
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No income entries</h3><p>Tap + Add to record income</p></div>';
+                return;
+            }
+            
+            container.innerHTML = filtered.map(i => {
+                const date = new Date(i.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const statusClass = i.status === 'received' ? 'received' : 'expected';
+                const statusIcon = i.status === 'received' ? '✅' : '⏳';
+                return `
+                    <div class="income-item" onclick="openEditIncome('${i.id}')">
+                        <div class="income-item-header">
+                            <div>
+                                <div class="income-item-desc">${i.description}</div>
+                                <div class="income-item-date">${date}</div>
+                            </div>
+                            <div class="income-item-amount">฿${formatNumber(i.amount)}</div>
+                        </div>
+                        <div class="income-item-status ${statusClass}">${statusIcon} ${i.status === 'received' ? 'Received' : 'Expected'}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function filterIncome(filter) {
+            document.querySelectorAll('#incomeView .view-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.textContent.toLowerCase().includes(filter) || (filter === 'all' && tab.textContent === 'All'));
+            });
+            renderIncomeList(filter);
+        }
+        
+        function addIncome() {
+            const date = document.getElementById('incomeDate').value;
+            const amount = parseFloat(document.getElementById('incomeAmount').value);
+            const description = document.getElementById('incomeDescription').value.trim();
+            const status = document.querySelector('input[name="incomeStatus"]:checked').value;
+            
+            if (!date || !amount || amount <= 0) {
+                showToast('Please fill in date and amount', 'error');
+                return;
+            }
+            
+            const newIncome = {
+                id: Date.now().toString(),
+                date, amount, description: description || 'Income',
+                status, addedBy: settings.userName || 'Unknown',
+                createdAt: new Date().toISOString()
+            };
+            
+            income.push(newIncome);
+            
+            if (database) {
+                database.ref('income/' + newIncome.id).set(newIncome);
+            }
+            
+            saveData();
+            showToast('Income added!', 'success');
+            closeModal('incomeModal');
+            
+            // Clear form
+            document.getElementById('incomeDate').value = '';
+            document.getElementById('incomeAmount').value = '';
+            document.getElementById('incomeDescription').value = '';
+            
+            renderIncomeList();
+        }
+        
+        function openEditIncome(id) {
+            const item = income.find(i => i.id === id);
+            if (!item) return;
+            
+            document.getElementById('editIncomeId').value = id;
+            document.getElementById('editIncomeDate').value = item.date;
+            document.getElementById('editIncomeAmount').value = item.amount;
+            document.getElementById('editIncomeDescription').value = item.description;
+            document.querySelector(`input[name="editIncomeStatus"][value="${item.status}"]`).checked = true;
+            
+            openModal('editIncomeModal');
+        }
+        
+        function saveIncomeEdit() {
+            const id = document.getElementById('editIncomeId').value;
+            const item = income.find(i => i.id === id);
+            if (!item) return;
+            
+            item.date = document.getElementById('editIncomeDate').value;
+            item.amount = parseFloat(document.getElementById('editIncomeAmount').value);
+            item.description = document.getElementById('editIncomeDescription').value.trim() || 'Income';
+            item.status = document.querySelector('input[name="editIncomeStatus"]:checked').value;
+            
+            if (database) {
+                database.ref('income/' + id).set(item);
+            }
+            
+            saveData();
+            showToast('Income updated!', 'success');
+            closeModal('editIncomeModal');
+            renderIncomeList();
+            updateDashboard();
+        }
+        
+        function deleteIncome() {
+            const id = document.getElementById('editIncomeId').value;
+            if (!confirm('Delete this income entry?')) return;
+            
+            income = income.filter(i => i.id !== id);
+            
+            if (database) {
+                database.ref('income/' + id).remove();
+            }
+            
+            saveData();
+            showToast('Income deleted', 'success');
+            closeModal('editIncomeModal');
+            renderIncomeList();
+            updateDashboard();
+        }
+
+        // ============================================
+        // RECURRING PAYMENTS
+        // ============================================
+        function renderRecurringList() {
+            const container = document.getElementById('recurringList');
+            
+            if (recurring.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No recurring payments</h3><p>Tap + Add to set up recurring bills</p></div>';
+                return;
+            }
+            
+            // Sort by next due date
+            const sorted = [...recurring].sort((a, b) => new Date(a.nextDueDate) - new Date(b.nextDueDate));
+            
+            container.innerHTML = sorted.map(r => {
+                const dueDate = new Date(r.nextDueDate);
+                const today = new Date();
+                const daysUntil = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                let dueText = dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                if (daysUntil < 0) dueText = `Overdue by ${Math.abs(daysUntil)} days`;
+                else if (daysUntil === 0) dueText = 'Due today!';
+                else if (daysUntil <= 7) dueText = `Due in ${daysUntil} days`;
+                
+                const freqLabels = { weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Quarterly', semester: 'Every 6 months', yearly: 'Yearly' };
+                
+                return `
+                    <div class="recurring-item">
+                        <div class="recurring-item-header">
+                            <div>
+                                <div class="recurring-item-name">${r.name}</div>
+                                <div class="recurring-item-freq">${freqLabels[r.frequency] || r.frequency}</div>
+                            </div>
+                            <div class="recurring-item-amount">฿${formatNumber(r.amount)}</div>
+                        </div>
+                        <div class="recurring-item-next" style="color: ${daysUntil < 0 ? 'var(--accent-red)' : daysUntil <= 7 ? 'var(--accent-orange)' : 'var(--text-muted)'}">
+                            📅 ${dueText}
+                        </div>
+                        <div class="recurring-item-actions">
+                            <button class="btn-mark-paid" onclick="markRecurringPaid('${r.id}')">✓ Mark as Paid</button>
+                            <button class="btn-edit-item" onclick="openEditRecurring('${r.id}')">Edit</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function addRecurring() {
+            const name = document.getElementById('recurringName').value.trim();
+            const amount = parseFloat(document.getElementById('recurringAmount').value);
+            const frequency = document.getElementById('recurringFrequency').value;
+            const nextDueDate = document.getElementById('recurringDueDate').value;
+            
+            if (!name || !amount || amount <= 0 || !nextDueDate) {
+                showToast('Please fill in all fields', 'error');
+                return;
+            }
+            
+            const newRecurring = {
+                id: Date.now().toString(),
+                name, amount, frequency, nextDueDate,
+                lastPaidDate: null,
+                addedBy: settings.userName || 'Unknown',
+                createdAt: new Date().toISOString()
+            };
+            
+            recurring.push(newRecurring);
+            
+            if (database) {
+                database.ref('recurring/' + newRecurring.id).set(newRecurring);
+            }
+            
+            saveData();
+            showToast('Recurring payment added!', 'success');
+            closeModal('recurringModal');
+            
+            // Clear form
+            document.getElementById('recurringName').value = '';
+            document.getElementById('recurringAmount').value = '';
+            document.getElementById('recurringDueDate').value = '';
+            
+            renderRecurringList();
+        }
+        
+        function markRecurringPaid(id) {
+            const item = recurring.find(r => r.id === id);
+            if (!item) return;
+            
+            if (!confirm(`Mark "${item.name}" (฿${formatNumber(item.amount)}) as paid?`)) return;
+            
+            // Create an expense entry
+            const expense = {
+                id: Date.now().toString(),
+                amount: item.amount,
+                originalAmount: item.amount,
+                originalCurrency: 'THB',
+                description: item.name,
+                category: 'other',
+                date: new Date().toISOString().split('T')[0],
+                inputType: 'recurring',
+                addedBy: settings.userName || 'Unknown',
+                createdAt: new Date().toISOString()
+            };
+            
+            if (database) {
+                database.ref('expenses/' + expense.id).set(expense);
+            } else {
+                expenses.push(expense);
+            }
+            
+            // Update next due date
+            item.lastPaidDate = new Date().toISOString().split('T')[0];
+            const nextDate = new Date(item.nextDueDate);
+            
+            switch(item.frequency) {
+                case 'weekly': nextDate.setDate(nextDate.getDate() + 7); break;
+                case 'monthly': nextDate.setMonth(nextDate.getMonth() + 1); break;
+                case 'quarterly': nextDate.setMonth(nextDate.getMonth() + 3); break;
+                case 'semester': nextDate.setMonth(nextDate.getMonth() + 6); break;
+                case 'yearly': nextDate.setFullYear(nextDate.getFullYear() + 1); break;
+            }
+            item.nextDueDate = nextDate.toISOString().split('T')[0];
+            
+            if (database) {
+                database.ref('recurring/' + id).set(item);
+            }
+            
+            saveData();
+            showToast(`Paid ฿${formatNumber(item.amount)} for ${item.name}`, 'success');
+            renderRecurringList();
+            updateDashboard();
+        }
+        
+        function openEditRecurring(id) {
+            const item = recurring.find(r => r.id === id);
+            if (!item) return;
+            
+            document.getElementById('editRecurringId').value = id;
+            document.getElementById('editRecurringName').value = item.name;
+            document.getElementById('editRecurringAmount').value = item.amount;
+            document.getElementById('editRecurringFrequency').value = item.frequency;
+            document.getElementById('editRecurringDueDate').value = item.nextDueDate;
+            
+            openModal('editRecurringModal');
+        }
+        
+        function saveRecurringEdit() {
+            const id = document.getElementById('editRecurringId').value;
+            const item = recurring.find(r => r.id === id);
+            if (!item) return;
+            
+            item.name = document.getElementById('editRecurringName').value.trim();
+            item.amount = parseFloat(document.getElementById('editRecurringAmount').value);
+            item.frequency = document.getElementById('editRecurringFrequency').value;
+            item.nextDueDate = document.getElementById('editRecurringDueDate').value;
+            
+            if (database) {
+                database.ref('recurring/' + id).set(item);
+            }
+            
+            saveData();
+            showToast('Recurring payment updated!', 'success');
+            closeModal('editRecurringModal');
+            renderRecurringList();
+        }
+        
+        function deleteRecurring() {
+            const id = document.getElementById('editRecurringId').value;
+            if (!confirm('Delete this recurring payment?')) return;
+            
+            recurring = recurring.filter(r => r.id !== id);
+            
+            if (database) {
+                database.ref('recurring/' + id).remove();
+            }
+            
+            saveData();
+            showToast('Recurring payment deleted', 'success');
+            closeModal('editRecurringModal');
+            renderRecurringList();
+        }
+
+        // ============================================
+        // PLANNED EXPENSES (One-time future expenses)
+        // ============================================
+        function renderPlannedExpensesList() {
+            const container = document.getElementById('plannedExpensesList');
+            
+            // Filter out past expenses that weren't marked as paid
+            const today = new Date().toISOString().split('T')[0];
+            const futureExpenses = plannedExpenses.filter(p => p.date >= today || p.status === 'pending');
+            
+            if (futureExpenses.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No planned expenses</div>';
+                return;
+            }
+            
+            // Sort by date
+            const sorted = [...futureExpenses].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            container.innerHTML = sorted.map(p => {
+                const expDate = new Date(p.date);
+                const daysUntil = Math.ceil((expDate - new Date()) / (1000 * 60 * 60 * 24));
+                const dateStr = expDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                let timeText = dateStr;
+                if (daysUntil < 0) timeText = `${Math.abs(daysUntil)} days ago`;
+                else if (daysUntil === 0) timeText = 'Today';
+                else if (daysUntil <= 30) timeText = `In ${daysUntil} days`;
+                
+                return `
+                    <div class="recurring-item" onclick="openEditPlanned('${p.id}')">
+                        <div class="recurring-item-header">
+                            <div>
+                                <div class="recurring-item-name">${p.description}</div>
+                                <div class="recurring-item-freq">One-time expense</div>
+                            </div>
+                            <div class="recurring-item-amount">฿${formatNumber(p.amount)}</div>
+                        </div>
+                        <div class="recurring-item-next">📅 ${timeText}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function addPlannedExpense() {
+            const description = document.getElementById('plannedDescription').value.trim();
+            const amount = parseFloat(document.getElementById('plannedAmount').value);
+            const date = document.getElementById('plannedDate').value;
+            
+            if (!description || !amount || amount <= 0 || !date) {
+                showToast('Please fill in all fields', 'error');
+                return;
+            }
+            
+            const newPlanned = {
+                id: Date.now().toString(),
+                description, amount, date,
+                status: 'pending',
+                addedBy: settings.userName || 'Unknown',
+                createdAt: new Date().toISOString()
+            };
+            
+            plannedExpenses.push(newPlanned);
+            
+            if (database) {
+                database.ref('plannedExpenses/' + newPlanned.id).set(newPlanned);
+            }
+            
+            saveData();
+            showToast('Planned expense added!', 'success');
+            closeModal('plannedExpenseModal');
+            renderPlannedExpensesList();
+            updateDashboard();
+        }
+        
+        function openEditPlanned(id) {
+            const item = plannedExpenses.find(p => p.id === id);
+            if (!item) return;
+            
+            document.getElementById('editPlannedId').value = id;
+            document.getElementById('editPlannedDescription').value = item.description;
+            document.getElementById('editPlannedAmount').value = item.amount;
+            document.getElementById('editPlannedDate').value = item.date;
+            
+            openModal('editPlannedExpenseModal');
+        }
+        
+        function savePlannedEdit() {
+            const id = document.getElementById('editPlannedId').value;
+            const item = plannedExpenses.find(p => p.id === id);
+            if (!item) return;
+            
+            item.description = document.getElementById('editPlannedDescription').value.trim();
+            item.amount = parseFloat(document.getElementById('editPlannedAmount').value);
+            item.date = document.getElementById('editPlannedDate').value;
+            
+            if (database) {
+                database.ref('plannedExpenses/' + id).set(item);
+            }
+            
+            saveData();
+            showToast('Planned expense updated!', 'success');
+            closeModal('editPlannedExpenseModal');
+            renderPlannedExpensesList();
+            updateDashboard();
+        }
+        
+        function markPlannedAsPaid() {
+            const id = document.getElementById('editPlannedId').value;
+            const item = plannedExpenses.find(p => p.id === id);
+            if (!item) return;
+            
+            if (!confirm(`Mark "${item.description}" (฿${formatNumber(item.amount)}) as paid?`)) return;
+            
+            // Create an expense entry
+            const expense = {
+                id: Date.now().toString(),
+                amount: item.amount,
+                originalAmount: item.amount,
+                originalCurrency: 'THB',
+                description: item.description,
+                category: 'other',
+                date: new Date().toISOString().split('T')[0],
+                inputType: 'planned',
+                addedBy: settings.userName || 'Unknown',
+                createdAt: new Date().toISOString()
+            };
+            
+            if (database) {
+                database.ref('expenses/' + expense.id).set(expense);
+                database.ref('plannedExpenses/' + id).remove();
+            } else {
+                expenses.push(expense);
+            }
+            
+            // Remove from planned
+            plannedExpenses = plannedExpenses.filter(p => p.id !== id);
+            
+            saveData();
+            showToast(`Paid ฿${formatNumber(item.amount)} for ${item.description}`, 'success');
+            closeModal('editPlannedExpenseModal');
+            renderPlannedExpensesList();
+            updateDashboard();
+        }
+        
+        function deletePlanned() {
+            const id = document.getElementById('editPlannedId').value;
+            if (!confirm('Delete this planned expense?')) return;
+            
+            plannedExpenses = plannedExpenses.filter(p => p.id !== id);
+            
+            if (database) {
+                database.ref('plannedExpenses/' + id).remove();
+            }
+            
+            saveData();
+            showToast('Planned expense deleted', 'success');
+            closeModal('editPlannedExpenseModal');
+            renderPlannedExpensesList();
+            updateDashboard();
+        }
+
+        // ============================================
+        // OVERVIEW & PROJECTIONS
+        // ============================================
+        function updateDashboard() {
+            const now = new Date();
+            const currentMonth = now.getMonth(), currentYear = now.getFullYear();
+            
+            // Update month display
+            document.getElementById('overviewMonth').textContent = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            // Calculate spending
+            const todayStr = now.toISOString().split('T')[0];
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            
+            const todayExpenses = expenses.filter(e => e.date === todayStr);
+            const weekExpenses = expenses.filter(e => new Date(e.date) >= weekAgo);
+            const monthExpenses = expenses.filter(e => { const d = new Date(e.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
+            
+            const todayTotal = todayExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const weekTotal = weekExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const monthTotal = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+            
+            // Update spending bars
+            updateSpendingBar('todaySpent', 'todayBar', todayTotal, settings.dailyBudget || 3000);
+            updateSpendingBar('weekSpent', 'weekBar', weekTotal, settings.weeklyBudget || 21000);
+            updateSpendingBar('monthSpent', 'monthBar', monthTotal, settings.monthlySpendingEstimate || 50000);
+            
+            document.getElementById('dailyBudgetDisplay').textContent = formatNumber(settings.dailyBudget || 3000);
+            document.getElementById('weeklyBudgetDisplay').textContent = formatNumber(settings.weeklyBudget || 21000);
+            document.getElementById('monthlyBudgetDisplay').textContent = formatNumber(settings.monthlySpendingEstimate || 50000);
+            
+            // Calculate income for this month
+            const monthIncome = income.filter(i => { const d = new Date(i.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
+            const receivedIncome = monthIncome.filter(i => i.status === 'received').reduce((sum, i) => sum + i.amount, 0);
+            const expectedIncome = monthIncome.filter(i => i.status === 'expected').reduce((sum, i) => sum + i.amount, 0);
+            
+            // Calculate recurring
+            const recurringPaidThisMonth = monthExpenses.filter(e => e.inputType === 'recurring').reduce((sum, e) => sum + e.amount, 0);
+            const dailySpending = monthTotal - recurringPaidThisMonth;
+            
+            // Upcoming recurring this month
+            const recurringUpcoming = recurring.filter(r => {
+                const d = new Date(r.nextDueDate);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear && d >= now;
+            }).reduce((sum, r) => sum + r.amount, 0);
+            
+            // Update cash flow display
+            document.getElementById('incomeReceived').textContent = `฿${formatNumber(receivedIncome)}`;
+            document.getElementById('incomeExpected').textContent = `฿${formatNumber(expectedIncome)}`;
+            document.getElementById('dailySpendingTotal').textContent = `-฿${formatNumber(dailySpending)}`;
+            document.getElementById('recurringPaid').textContent = `-฿${formatNumber(recurringPaidThisMonth)}`;
+            document.getElementById('recurringUpcoming').textContent = `฿${formatNumber(recurringUpcoming)}`;
+            
+            const netCashFlow = receivedIncome - monthTotal;
+            const netEl = document.getElementById('netCashFlow');
+            netEl.textContent = `${netCashFlow >= 0 ? '+' : ''}฿${formatNumber(netCashFlow)}`;
+            netEl.className = 'cash-flow-value ' + (netCashFlow >= 0 ? 'income' : 'expense');
+            
+            // Update projection
+            updateProjection(3);
+            
+            // Render recent expenses
+            renderRecentExpenses();
+        }
+        
+        function updateSpendingBar(amountId, barId, spent, budget) {
+            document.getElementById(amountId).textContent = `฿${formatNumber(spent)}`;
+            const percent = Math.min((spent / budget) * 100, 100);
+            const bar = document.getElementById(barId);
+            bar.style.width = `${percent}%`;
+            bar.className = 'spending-bar-fill ' + (percent > 100 ? 'red' : percent > 80 ? 'yellow' : 'green');
+        }
+        
+        function updateProjection(months) {
+            const grid = document.getElementById('projectionGrid');
+            const now = new Date();
+            let html = '';
+            
+            for (let i = 1; i <= months; i++) {
+                const futureDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
+                const nextMonth = new Date(now.getFullYear(), now.getMonth() + i + 1, 0); // Last day of month
+                const monthName = futureDate.toLocaleDateString('en-US', { month: 'short' });
+                
+                // Expected income for this month
+                const monthIncome = income.filter(inc => {
+                    const d = new Date(inc.date);
+                    return d.getMonth() === futureDate.getMonth() && d.getFullYear() === futureDate.getFullYear();
+                }).reduce((sum, inc) => sum + inc.amount, 0);
+                
+                // Recurring expenses for this month
+                const monthRecurring = calculateRecurringForMonth(futureDate);
+                
+                // Planned one-time expenses for this month
+                const monthPlanned = plannedExpenses.filter(p => {
+                    const d = new Date(p.date);
+                    return d.getMonth() === futureDate.getMonth() && d.getFullYear() === futureDate.getFullYear();
+                }).reduce((sum, p) => sum + p.amount, 0);
+                
+                // Estimated daily spending
+                const estimatedDaily = settings.monthlySpendingEstimate || 50000;
+                
+                const totalExpenses = monthRecurring + monthPlanned + estimatedDaily;
+                const net = monthIncome - totalExpenses;
+                
+                html += `
+                    <div class="projection-month">
+                        <div class="projection-month-name">${monthName}</div>
+                        <div class="projection-month-net ${net >= 0 ? 'positive' : 'negative'}">
+                            ${net >= 0 ? '+' : ''}฿${formatCompact(net)}
+                        </div>
+                        <div class="projection-detail">In: ฿${formatCompact(monthIncome)}</div>
+                        <div class="projection-detail">Out: ฿${formatCompact(totalExpenses)}</div>
+                    </div>
+                `;
+            }
+            
+            grid.innerHTML = html;
+        }
+        
+        function calculateRecurringForMonth(targetDate) {
+            let total = 0;
+            const targetMonth = targetDate.getMonth();
+            const targetYear = targetDate.getFullYear();
+            
+            recurring.forEach(r => {
+                const dueDate = new Date(r.nextDueDate);
+                let checkDate = new Date(dueDate);
+                
+                // Check if any occurrence falls in target month
+                while (checkDate.getFullYear() < targetYear || 
+                       (checkDate.getFullYear() === targetYear && checkDate.getMonth() <= targetMonth)) {
+                    if (checkDate.getMonth() === targetMonth && checkDate.getFullYear() === targetYear) {
+                        total += r.amount;
+                        break;
+                    }
+                    // Advance to next occurrence
+                    switch(r.frequency) {
+                        case 'weekly': checkDate.setDate(checkDate.getDate() + 7); break;
+                        case 'monthly': checkDate.setMonth(checkDate.getMonth() + 1); break;
+                        case 'quarterly': checkDate.setMonth(checkDate.getMonth() + 3); break;
+                        case 'semester': checkDate.setMonth(checkDate.getMonth() + 6); break;
+                        case 'yearly': checkDate.setFullYear(checkDate.getFullYear() + 1); break;
+                    }
+                }
+            });
+            
+            return total;
+        }
+        
+        function formatCompact(num) {
+            if (Math.abs(num) >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (Math.abs(num) >= 1000) return (num / 1000).toFixed(0) + 'K';
+            return formatNumber(num);
         }
 
         // ============================================
