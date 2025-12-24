@@ -509,7 +509,7 @@
                     <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
                 </svg>
             </button>
-            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v4.3</span></div>
+            <div class="logo">Family Expenses <span style="font-size: 0.5em; opacity: 0.5;">v4.4</span></div>
             <div class="header-date" id="currentDate"></div>
         </div>
     </header>
@@ -689,6 +689,13 @@
                         <div class="settings-item-desc" id="firebaseStatusDesc">Checking...</div>
                     </div>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
+                </div>
+                <div class="settings-item" onclick="forceSyncFromFirebase()">
+                    <div class="settings-item-info">
+                        <div class="settings-item-label">Force Sync from Firebase</div>
+                        <div class="settings-item-desc">Reload all data from Firebase database</div>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
                 </div>
             </div>
             <div class="settings-section">
@@ -1360,6 +1367,8 @@
                 database.ref('expenses').on('value', (snapshot) => {
                     const data = snapshot.val();
                     expenses = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                    // Save to localStorage after Firebase sync
+                    localStorage.setItem('familyExpenses', JSON.stringify(expenses));
                     updateDashboard();
                 });
                 // Listen for budgets changes  
@@ -1387,6 +1396,7 @@
                 database.ref('income').on('value', (snapshot) => {
                     const data = snapshot.val();
                     income = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                    localStorage.setItem('familyIncome', JSON.stringify(income));
                     if (document.getElementById('incomeView') && !document.getElementById('incomeView').classList.contains('hidden')) {
                         renderIncomeList();
                     }
@@ -1396,6 +1406,7 @@
                 database.ref('recurring').on('value', (snapshot) => {
                     const data = snapshot.val();
                     recurring = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                    localStorage.setItem('familyRecurring', JSON.stringify(recurring));
                     if (document.getElementById('recurringView') && !document.getElementById('recurringView').classList.contains('hidden')) {
                         renderRecurringList();
                     }
@@ -1405,6 +1416,7 @@
                 database.ref('plannedExpenses').on('value', (snapshot) => {
                     const data = snapshot.val();
                     plannedExpenses = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                    localStorage.setItem('familyPlannedExpenses', JSON.stringify(plannedExpenses));
                     if (document.getElementById('recurringView') && !document.getElementById('recurringView').classList.contains('hidden')) {
                         renderPlannedExpensesList();
                     }
@@ -1453,6 +1465,50 @@
             if (!database) return false;
             database.ref('expenses/' + id).remove();
             return true;
+        }
+        
+        function forceSyncFromFirebase() {
+            if (!database) {
+                showToast('Firebase not connected', 'error');
+                return;
+            }
+            
+            showToast('Syncing from Firebase...', 'success');
+            
+            // Force reload all data from Firebase
+            database.ref('expenses').once('value', (snapshot) => {
+                const data = snapshot.val();
+                expenses = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                localStorage.setItem('familyExpenses', JSON.stringify(expenses));
+                console.log(`Synced ${expenses.length} expenses from Firebase`);
+            });
+            
+            database.ref('income').once('value', (snapshot) => {
+                const data = snapshot.val();
+                income = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                localStorage.setItem('familyIncome', JSON.stringify(income));
+                console.log(`Synced ${income.length} income entries from Firebase`);
+            });
+            
+            database.ref('recurring').once('value', (snapshot) => {
+                const data = snapshot.val();
+                recurring = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                localStorage.setItem('familyRecurring', JSON.stringify(recurring));
+                console.log(`Synced ${recurring.length} recurring payments from Firebase`);
+            });
+            
+            database.ref('plannedExpenses').once('value', (snapshot) => {
+                const data = snapshot.val();
+                plannedExpenses = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                localStorage.setItem('familyPlannedExpenses', JSON.stringify(plannedExpenses));
+                console.log(`Synced ${plannedExpenses.length} planned expenses from Firebase`);
+            });
+            
+            // Wait a moment then refresh
+            setTimeout(() => {
+                updateDashboard();
+                showToast(`Sync complete! Loaded ${expenses.length} expenses`, 'success');
+            }, 1000);
         }
 
         function populateCategoryGrid(gridId) {
